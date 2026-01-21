@@ -135,6 +135,8 @@ class _ProductCustomizationDialogState
   }
 
   void _addToCart() {
+    print('DEBUG DIALOG: _addToCart() called - Product: ${widget.product.name}, Quantity: $_quantity');
+    
     // Build notes data combining ingredient options, product options, and custom notes
     Map<String, dynamic> notesData = {};
     
@@ -172,6 +174,8 @@ class _ProductCustomizationDialogState
       notes = jsonEncode(notesData);
     }
     
+    print('DEBUG DIALOG: Calling cartProvider.addToCart() - Product ID: ${widget.product.id}, Quantity: $_quantity, Notes: $notes');
+    
     // Add to cart with custom quantity, ingredients, options, and notes
     ref.read(cartProvider.notifier).addToCart(
       productId: widget.product.id,
@@ -179,14 +183,18 @@ class _ProductCustomizationDialogState
       notes: notes,
     );
     
+    print('DEBUG DIALOG: cartProvider.addToCart() called (NOT awaited)');
+    print('DEBUG DIALOG: Calling widget.onAddToCart()');
     widget.onAddToCart();
+    print('DEBUG DIALOG: Closing dialog with Navigator.pop()');
     Navigator.pop(context);
+    print('DEBUG DIALOG: Dialog closed');
   }
 
   String _formatPrice(int price) {
     return price.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
+      (Match m) => '${m[1]},',
     );
   }
 

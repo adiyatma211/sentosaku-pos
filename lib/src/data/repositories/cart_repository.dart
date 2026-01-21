@@ -17,14 +17,21 @@ class CartRepositoryImpl implements CartRepository {
   @override
   Future<Either<Failure, Cart?>> getCurrentCart() async {
     try {
+      print('DEBUG REPO: Getting current cart...');
       final cartData = await _cartDao.getCurrentCart();
-      if (cartData == null) return const Right(null);
+      if (cartData == null) {
+        print('DEBUG REPO: No current cart found');
+        return const Right(null);
+      }
       
+      print('DEBUG REPO: Current cart found - ID: ${cartData.id}');
       final cartItemsData = await _cartDao.getCartItems(cartData.id);
       final items = cartItemsData.map(_mapCartItemToEntity).toList();
+      print('DEBUG REPO: Cart items mapped - Count: ${items.length}');
       
       return Right(_mapCartToEntity(cartData, items));
     } catch (e) {
+      print('DEBUG REPO: Error getting current cart: $e');
       return Left(Failure(message: e.toString()));
     }
   }
@@ -47,20 +54,28 @@ class CartRepositoryImpl implements CartRepository {
     int? variantId,
     String? notes,
   }) async {
+    print('DEBUG REPO: addToCart ENTRY - Cart ID: $cartId, Product ID: $productId, Quantity: $quantity');
     try {
+      print('DEBUG REPO: addToCart START - Cart ID: $cartId, Product ID: $productId, Quantity: $quantity, Variant ID: $variantId, Notes: $notes');
+      
       // Get product details
       final product = await _cartDao.getProductById(productId);
       if (product == null) {
+        print('DEBUG REPO: Product not found - ID: $productId');
         return const Left(Failure(message: 'Product not found'));
       }
+      
+      print('DEBUG REPO: Product found - ${product.name}, Price: ${product.price}');
       
       // Get variant details if provided
       db.Variant? variant;
       if (variantId != null) {
         variant = await _cartDao.getVariantById(variantId);
         if (variant == null) {
+          print('DEBUG REPO: Variant not found - ID: $variantId');
           return const Left(Failure(message: 'Product variant not found'));
         }
+        print('DEBUG REPO: Variant found - ${variant.name}, Price: ${variant.price}');
       }
       
       // Check if item already exists in cart
@@ -68,32 +83,70 @@ class CartRepositoryImpl implements CartRepository {
         cartId, productId, variantId,
       );
       
+      print('DEBUG REPO: Existing item check: ${existingItem != null ? 'Found' : 'Not found'}');
+      if (existingItem != null) {
+        print('DEBUG REPO: Existing item ID: ${existingItem.id}, Current quantity: ${existingItem.quantity}');
+      }
+      
       db.CartItem cartItemData;
       if (existingItem != null) {
         // Update existing item quantity
         final newQuantity = existingItem.quantity + quantity;
+        print('DEBUG REPO: Updating existing item - Old quantity: ${existingItem.quantity}, New quantity: $newQuantity');
         cartItemData = await _cartDao.updateCartItemQuantity(
           existingItem.id, newQuantity,
         );
       } else {
         // Add new item to cart
-        cartItemData = await _cartDao.addCartItem(
-          db.CartItemsCompanion.insert(
-            uuid: DateTime.now().millisecondsSinceEpoch.toString(),
-            cartId: cartId,
-            productId: productId,
-            quantity: Value(quantity),
-            variantId: variantId != null ? Value(variantId) : const Value.absent(),
-            notes: notes != null ? Value(notes) : const Value.absent(),
-            unitPrice: Value((variant?.price ?? product.price).toDouble()),
-            totalPrice: Value(((variant?.price ?? product.price) * quantity).toDouble()),
-          ),
-        );
+        print('DEBUG REPO: Adding new item to cart');
+        print('DEBUG REPO: Product price: ${product.price}, Variant price: ${variant?.price}');
+        print('DEBUG REPO: Quantity: $quantity');
+        final calculatedPrice = (variant?.price ?? product.price) * quantity;
+        print('DEBUG REPO: Calculated total price: $calculatedPrice');
+        try {
+          cartItemData = await _cartDao.addCartItem(
+            db.CartItemsCompanion.insert(
+              uuid: DateTime.now().millisecondsSinceEpoch.toString(),
+              cartId: cartId,
+              productId: productId,
+              quantity: Value(quantity),
+              variantId: variantId != null ? Value(variantId) : const Value.absent(),
+              notes: notes != null ? Value(notes) : const Value.absent(),
+              unitPrice: Value((variant?.price ?? product.price).toDouble()),
+              totalPrice: Value(((variant?.price ?? product.price) * quantity).toDouble()),
+            ),
+          );
+          print('DEBUG REPO: Cart item added successfully - ID: ${cartItemData.id}');
+          print('DEBUG REPO: Stored unitPrice: ${cartItemData.unitPrice}, totalPrice: ${cartItemData.totalPrice}');
+        } catch (e) {
+          print('DEBUG REPO: Error adding cart item: $e');
+          return Left(Failure(message: 'Failed to add cart item: $e'));
+        }
       }
       
+      print('DEBUG REPO: Cart item added/updated - ID: ${cartItemData.id}');
+      
+      // Update cart totals to ensure subtotal, tax, and discount are calculated correctly
+      print('DEBUG REPO: Updating cart totals for cart ID: $cartId');
+      await _cartDao.updateCartTotals(cartId);
+      
       // Get updated cart
-      return await getCartById(cartId);
+      print('DEBUG REPO: Getting updated cart by ID: $cartId');
+      final cartResult = await getCartById(cartId);
+      cartResult.fold(
+        (error) {
+          print('DEBUG REPO: Error getting cart by ID: ${error.message}');
+          return Left(error);
+        },
+        (cart) {
+          print('DEBUG REPO: Cart retrieved successfully - ID: ${cart.id}, Items: ${cart.items.length}');
+          return Right(cart);
+        },
+      );
+      print('DEBUG REPO: addToCart END - Returning cart with ${cartResult.fold((l) => 0, (r) => r.items.length)} items');
+      return cartResult;
     } catch (e) {
+      print('DEBUG REPO: Exception in addToCart: $e');
       return Left(Failure(message: e.toString()));
     }
   }

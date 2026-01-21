@@ -4,6 +4,7 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 
 import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/payment_repository.dart';
+import '../../data/repositories/cart_repository.dart';
 import '../../data/services/receipt_service_impl.dart';
 import '../../domain/repositories/cart_repository.dart' as cart_repo;
 import '../../domain/entities/cart.dart' as cart_entity;
@@ -15,10 +16,10 @@ import '../providers/global_providers.dart';
 
 // Cart repository provider
 final cartRepositoryProvider = Provider<cart_repo.CartRepository>((ref) {
-  // We need to create a CartDao instance, but for now we'll create a simple implementation
-  // In a real app, this would be injected properly
-  // For now, let's create a simple mock implementation
-  return MockCartRepository();
+  // Use the real CartRepositoryImpl implementation instead of mock
+  final database = ref.watch(databaseProvider);
+  final cartDao = database.cartDao;
+  return CartRepositoryImpl(cartDao);
 });
 
 // Order repository provider

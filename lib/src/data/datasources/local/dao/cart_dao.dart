@@ -10,17 +10,32 @@ class CartDao extends DatabaseAccessor<AppDatabase> with _$CartDaoMixin {
   CartDao(super.db);
 
   // Get current active cart
-  Future<Cart?> getCurrentCart() {
-    return (select(carts)
+  Future<Cart?> getCurrentCart() async {
+    print('DEBUG DAO: Getting current active cart...');
+    final cart = await (select(carts)
           ..where((tbl) => tbl.status.equals('active'))
           ..orderBy([(tbl) => OrderingTerm(expression: tbl.createdAt, mode: OrderingMode.desc)])
           ..limit(1))
         .getSingleOrNull();
+    if (cart != null) {
+      print('DEBUG DAO: Active cart found - ID: ${cart.id}');
+    } else {
+      print('DEBUG DAO: No active cart found');
+    }
+    return cart;
   }
 
   // Get cart by ID
-  Future<Cart?> getCartById(int id) {
-    return (select(carts)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+  Future<Cart?> getCartById(int id) async {
+    print('DEBUG DAO: Getting cart by ID - ID: $id');
+    final cart = await (select(carts)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+    if (cart != null) {
+      final items = await getCartItems(id);
+      print('DEBUG DAO: Cart found - ID: ${cart.id}, Items: ${items.length}');
+    } else {
+      print('DEBUG DAO: Cart not found - ID: $id');
+    }
+    return cart;
   }
 
   // Create a new cart
@@ -42,6 +57,8 @@ class CartDao extends DatabaseAccessor<AppDatabase> with _$CartDaoMixin {
 
   // Update cart totals
   Future<void> updateCartTotals(int cartId) async {
+    print('DEBUG DAO: updateCartTotals START - Cart ID: $cartId');
+    
     // Calculate totals from cart items
     final itemsQuery = selectOnly(cartItems)
       ..addColumns([cartItems.totalPrice.sum()])
@@ -49,10 +66,12 @@ class CartDao extends DatabaseAccessor<AppDatabase> with _$CartDaoMixin {
     
     final result = await itemsQuery.getSingle();
     final subtotal = result.read(cartItems.totalPrice.sum()) ?? 0.0;
+    print('DEBUG DAO: Calculated subtotal: $subtotal');
     
     // Calculate tax (10%)
     final taxAmount = subtotal * 0.1;
     final totalAmount = subtotal + taxAmount;
+    print('DEBUG DAO: Calculated tax: $taxAmount, Total: $totalAmount');
     
     // Update cart
     await (update(carts)..where((tbl) => tbl.id.equals(cartId)))
@@ -62,6 +81,7 @@ class CartDao extends DatabaseAccessor<AppDatabase> with _$CartDaoMixin {
       totalAmount: Value(totalAmount),
       updatedAt: Value(DateTime.now()),
     ));
+    print('DEBUG DAO: Cart totals updated successfully');
   }
 
   // Update cart discount
@@ -84,11 +104,14 @@ class CartDao extends DatabaseAccessor<AppDatabase> with _$CartDaoMixin {
   }
 
   // Get cart items
-  Future<List<CartItem>> getCartItems(int cartId) {
-    return (select(cartItems)
+  Future<List<CartItem>> getCartItems(int cartId) async {
+    print('DEBUG DAO: Getting cart items - Cart ID: $cartId');
+    final items = await (select(cartItems)
           ..where((tbl) => tbl.cartId.equals(cartId))
           ..orderBy([(tbl) => OrderingTerm(expression: tbl.createdAt)]))
         .get();
+    print('DEBUG DAO: Cart items retrieved - Count: ${items.length}');
+    return items;
   }
 
   // Get cart item by ID
@@ -111,8 +134,23 @@ class CartDao extends DatabaseAccessor<AppDatabase> with _$CartDaoMixin {
   }
 
   // Add cart item
-  Future<CartItem> addCartItem(CartItemsCompanion entry) {
-    return into(cartItems).insertReturning(entry);
+  Future<CartItem> addCartItem(CartItemsCompanion entry) async {
+    print('DEBUG DAO: addCartItem START - Cart ID: ${entry.cartId.value}, Product ID: ${entry.productId.value}, Quantity: ${entry.quantity.value}');
+    final result = await into(cartItems).insertReturning(entry);
+    print('DEBUG DAO: Cart item added successfully - ID: ${result.id}, Cart ID: ${result.cartId}, Product ID: ${result.productId}, Quantity: ${result.quantity}');
+    
+    // Verify the item was added by querying it back
+    final verifyItem = await getCartItemById(result.id);
+    print('DEBUG DAO: Verification - Item found: ${verifyItem != null}');
+    if (verifyItem != null) {
+      print('DEBUG DAO: Verified item - ID: ${verifyItem.id}, Cart ID: ${verifyItem.cartId}, Quantity: ${verifyItem.quantity}');
+    }
+    
+    // Get all items in the cart to verify
+    final allItems = await getCartItems(entry.cartId.value);
+    print('DEBUG DAO: Total items in cart ${entry.cartId.value}: ${allItems.length}');
+    
+    return result;
   }
 
   // Update cart item quantity

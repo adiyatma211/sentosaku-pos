@@ -127,7 +127,7 @@ class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScr
                     ),
                   ),
                   Text(
-                    'Rp ${(45000 + (index * 1000)).toString()}',
+                    'Rp ${(45000 + (index * 1000)).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).primaryColor,
@@ -259,7 +259,7 @@ class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScr
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    'Rp ${(45000 + (index * 1000)).toString()}',
+                    'Rp ${(45000 + (index * 1000)).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],

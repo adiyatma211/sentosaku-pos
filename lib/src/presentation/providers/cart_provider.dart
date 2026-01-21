@@ -23,29 +23,40 @@ class CartNotifier extends StateNotifier<AsyncValue<Cart>> {
       : super(const AsyncValue.loading());
 
   Future<void> loadCart() async {
+    print('DEBUG PROVIDER: Loading cart...');
     state = const AsyncValue.loading();
     final result = await _cartRepository.getCurrentCart();
     
     result.fold(
-      (Failure error) => state = AsyncValue.error(error, StackTrace.current),
-      (Cart? cart) {
+      (Failure error) {
+        print('DEBUG PROVIDER: Error loading cart - ${error.message}');
+        state = AsyncValue.error(error, StackTrace.current);
+      },
+      (Cart? cart) async {
         if (cart != null) {
           _currentCartId = cart.id;
+          print('DEBUG PROVIDER: Cart loaded - ID: $_currentCartId, Items: ${cart.items.length}');
           state = AsyncValue.data(cart);
         } else {
           // Create a new cart if none exists
-          createCart();
+          print('DEBUG PROVIDER: No cart found, creating new cart...');
+          await createCart();
         }
       },
     );
   }
 
   Future<void> createCart() async {
+    print('DEBUG PROVIDER: Creating new cart...');
     final result = await _cartRepository.createCart();
     result.fold(
-      (Failure error) => state = AsyncValue.error(error, StackTrace.current),
+      (Failure error) {
+        print('DEBUG PROVIDER: Error creating cart - ${error.message}');
+        state = AsyncValue.error(error, StackTrace.current);
+      },
       (Cart cart) {
         _currentCartId = cart.id;
+        print('DEBUG PROVIDER: Cart created - ID: $_currentCartId');
         state = AsyncValue.data(cart);
       },
     );
@@ -57,10 +68,23 @@ class CartNotifier extends StateNotifier<AsyncValue<Cart>> {
     int? variantId,
     String? notes,
   }) async {
-    // Ensure we have a cart
-    if (state.value == null) {
-      await createCart();
+    print('DEBUG PROVIDER: addToCart START - Product ID: $productId, Quantity: $quantity, Variant ID: $variantId, Notes: $notes');
+    print('DEBUG PROVIDER: Current state before addToCart - isLoading: ${state.isLoading}, hasValue: ${state.value != null}');
+    if (state.value != null) {
+      print('DEBUG PROVIDER: Current cart ID: ${state.value!.id}, Items count: ${state.value!.items.length}');
     }
+    
+    // Ensure we have a cart and get the correct cart ID
+    if (state.value == null) {
+      print('DEBUG PROVIDER: Cart state is null, creating new cart...');
+      await createCart();
+    } else {
+      // Update current cart ID from the loaded cart
+      _currentCartId = state.value!.id;
+      print('DEBUG PROVIDER: Cart state exists - ID: $_currentCartId, Items: ${state.value!.items.length}');
+    }
+
+    print('DEBUG PROVIDER: Adding to cart - Cart ID: $_currentCartId, Product ID: $productId, Quantity: $quantity');
 
     final result = await _cartRepository.addToCart(
       cartId: _currentCartId,
@@ -70,10 +94,22 @@ class CartNotifier extends StateNotifier<AsyncValue<Cart>> {
       notes: notes,
     );
     
+    print('DEBUG PROVIDER: addToCart repository call completed');
+    
     result.fold(
-      (Failure error) => state = AsyncValue.error(error, StackTrace.current),
-      (Cart cart) => state = AsyncValue.data(cart),
+      (Failure error) {
+        print('DEBUG PROVIDER: Error adding to cart: ${error.message}');
+        state = AsyncValue.error(error, StackTrace.current);
+      },
+      (Cart cart) {
+        print('DEBUG PROVIDER: Cart updated successfully - ID: ${cart.id}, Items: ${cart.items.length}');
+        print('DEBUG PROVIDER: Updating state with new cart data...');
+        // Update state with the returned cart that includes the new item
+        state = AsyncValue.data(cart);
+        print('DEBUG PROVIDER: State updated - New state hasValue: ${state.value != null}, Items count: ${state.value?.items.length ?? 0}');
+      },
     );
+    print('DEBUG PROVIDER: addToCart END');
   }
 
   Future<void> updateQuantity(int cartItemId, int quantity) async {

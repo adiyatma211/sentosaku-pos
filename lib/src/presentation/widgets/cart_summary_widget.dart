@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../domain/entities/cart.dart';
 
 class CartSummaryWidget extends StatelessWidget {
@@ -15,6 +16,9 @@ class CartSummaryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('DEBUG CART SUMMARY: Building cart summary widget');
+    print('DEBUG CART SUMMARY: Subtotal: ${cart.subtotal}, Tax: ${cart.taxAmount}, Discount: ${cart.discountAmount}, Total: ${cart.totalAmount}');
+    
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -89,19 +93,31 @@ class CartSummaryWidget extends StatelessWidget {
             const SizedBox(height: 12),
             _buildSummaryRow(
               label: 'Subtotal',
-              value: '\$${cart.subtotal.toStringAsFixed(2)}',
+              value: NumberFormat.currency(
+                locale: 'id_ID',
+                symbol: 'Rp',
+                decimalDigits: 2,
+              ).format(cart.subtotal),
               icon: Icons.attach_money,
             ),
             const SizedBox(height: 12),
             _buildSummaryRow(
               label: 'Tax',
-              value: '\$${cart.taxAmount.toStringAsFixed(2)}',
+              value: NumberFormat.currency(
+                locale: 'id_ID',
+                symbol: 'Rp',
+                decimalDigits: 2,
+              ).format(cart.taxAmount),
               icon: Icons.percent,
             ),
             const SizedBox(height: 12),
             _buildSummaryRow(
               label: 'Discount',
-              value: '\$${cart.discountAmount.toStringAsFixed(2)}',
+              value: NumberFormat.currency(
+                locale: 'id_ID',
+                symbol: 'Rp',
+                decimalDigits: 2,
+              ).format(cart.discountAmount),
               icon: Icons.local_offer,
               isDiscount: true,
             ),
@@ -165,7 +181,11 @@ class CartSummaryWidget extends StatelessWidget {
                       ],
                     ),
                     child: Text(
-                      '\$${cart.totalAmount.toStringAsFixed(2)}',
+                      NumberFormat.currency(
+                        locale: 'id_ID',
+                        symbol: 'Rp',
+                        decimalDigits: 2,
+                      ).format(cart.totalAmount),
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,

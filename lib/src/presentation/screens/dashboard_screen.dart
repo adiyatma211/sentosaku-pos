@@ -248,12 +248,14 @@ class DashboardScreen extends StatelessWidget {
                           title: 'Analytic',
                           color: const Color(0xFF5E8C52),
                           onTap: () {
-                            CustomToast.show(
-                              context,
-                              message: 'Analytic coming soon!',
-                              backgroundColor: const Color(0xFF5E8C52),
-                              textColor: Colors.white,
-                              icon: Icons.bar_chart,
+                            // Simple chart placeholder - requires fl_chart package to be installed
+                            // Run: flutter pub add fl_chart
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Chart requires fl_chart package. Run: flutter pub add fl_chart'),
+                                backgroundColor: const Color(0xFF5E8C52),
+                                duration: const Duration(seconds: 3),
+                              ),
                             );
                           },
                         ),
