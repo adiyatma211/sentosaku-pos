@@ -1,0 +1,8 @@
+// Fix for flutter_bluetooth_serial namespace issue
+// This file will be applied to the flutter_bluetooth_serial package
+
+if (project.name == "flutter_bluetooth_serial") {
+    android {
+        namespace = "com.devlabs.flutterbluetoothserial"
+    }
+}

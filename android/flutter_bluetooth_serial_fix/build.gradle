@@ -1,0 +1,19 @@
+// Fix for flutter_bluetooth_serial namespace issue
+// This file overrides the package's build.gradle to add the missing namespace
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace = "com.devlabs.flutterbluetoothserial"
+    compileSdkVersion 34
+    
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 34
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

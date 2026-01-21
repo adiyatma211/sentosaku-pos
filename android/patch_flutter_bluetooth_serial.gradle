@@ -1,0 +1,21 @@
+// This script patches the flutter_bluetooth_serial package's AndroidManifest.xml
+// to remove the package attribute which is causing issues with newer Android Gradle Plugin
+
+afterEvaluate {
+    if (project.name == "flutter_bluetooth_serial") {
+        android.applicationVariants.all { variant ->
+            variant.outputs.all { output ->
+                def processManifest = output.getProcessManifestProvider().get()
+                processManifest.doLast {
+                    def manifestFile = File("${outputDir}/AndroidManifest.xml")
+                    if (manifestFile.exists()) {
+                        def content = manifestFile.getText()
+                        // Remove the package attribute from the manifest
+                        def updatedContent = content.replaceAll(/package="[^"]*"/, "")
+                        manifestFile.write(updatedContent)
+                    }
+                }
+            }
+        }
+    }
+}
