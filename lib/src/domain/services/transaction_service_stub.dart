@@ -8,6 +8,9 @@ class TransactionServiceStub {
     required String paymentMethod,
     required int paidAmount,
   }) async {
+    print('DEBUG TRANSACTION STUB: processTransaction() START');
+    print('DEBUG TRANSACTION STUB: cartId: $cartId, paymentMethod: $paymentMethod, paidAmount: $paidAmount');
+    
     // Simulate processing time
     await Future.delayed(const Duration(seconds: 2));
 
@@ -39,6 +42,9 @@ class TransactionServiceStub {
       payments: null,
     );
 
+    print('DEBUG TRANSACTION STUB: Mock order created - ID: ${order.id}, UUID: ${order.uuid}, Order Number: ${order.orderNumber}');
+    print('DEBUG TRANSACTION STUB: WARNING - This is a STUB implementation. The order is NOT saved to the database!');
+    print('DEBUG TRANSACTION STUB: processTransaction() END');
     return Right(order);
   }
 }

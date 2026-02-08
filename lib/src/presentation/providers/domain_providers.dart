@@ -5,6 +5,7 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/cart_repository.dart';
+import '../../data/repositories/product_repository.dart';
 import '../../data/services/receipt_service_impl.dart';
 import '../../domain/repositories/cart_repository.dart' as cart_repo;
 import '../../domain/entities/cart.dart' as cart_entity;
@@ -32,6 +33,12 @@ final orderRepositoryProvider = Provider((ref) {
 final paymentRepositoryProvider = Provider((ref) {
   final database = ref.watch(databaseProvider);
   return PaymentRepository(database);
+});
+
+// Product repository provider
+final productRepositoryProvider = Provider((ref) {
+  final database = ref.watch(databaseProvider);
+  return ProductRepository(database);
 });
 
 // Bluetooth service provider

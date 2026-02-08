@@ -8,6 +8,7 @@ import '../../data/datasources/local/dao/product_dao.dart';
 import '../../data/datasources/local/dao/product_option_dao.dart';
 import '../../domain/entities/category.dart' as cat;
 import '../../presentation/providers/global_providers.dart';
+import '../widgets/custom_toast.dart';
 
 class ProductManagementScreen extends ConsumerStatefulWidget {
   const ProductManagementScreen({super.key});
@@ -752,11 +753,9 @@ class _ProductManagementScreenState
                   setDialogState(() {});
                 } else {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('File gambar tidak ditemukan'),
-                        backgroundColor: Colors.red,
-                      ),
+                    CustomToast.error(
+                      context,
+                      'File gambar tidak ditemukan',
                     );
                   }
                 }
@@ -765,11 +764,9 @@ class _ProductManagementScreenState
             } catch (e) {
               // Handle any errors during image picking
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Gagal memilih gambar: ${e.toString()}'),
-                    backgroundColor: Colors.red,
-                  ),
+                CustomToast.error(
+                  context,
+                  'Gagal memilih gambar: ${e.toString()}',
                 );
               }
               // Log the error for debugging
@@ -1162,23 +1159,28 @@ class _ProductManagementScreenState
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.tune,
-                                size: 20,
-                                color: Colors.grey.shade700,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Opsi Produk',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16,
-                                  color: Color(0xFF1A1A2A),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.tune,
+                                  size: 20,
+                                  color: Colors.grey.shade700,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    'Opsi Produk',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                      color: Color(0xFF1A1A2A),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           TextButton.icon(
                             onPressed: () {
@@ -1565,20 +1567,16 @@ class _ProductManagementScreenState
                     
                     if (mounted) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Produk berhasil ditambahkan'),
-                          backgroundColor: Colors.green,
-                        ),
+                      CustomToast.success(
+                        context,
+                        'Produk berhasil ditambahkan',
                       );
                     }
                   } catch (e) {
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Gagal menambah produk: ${e.toString()}'),
-                          backgroundColor: Colors.red,
-                        ),
+                      CustomToast.error(
+                        context,
+                        'Gagal menambah produk: ${e.toString()}',
                       );
                     }
                   }
@@ -1912,20 +1910,16 @@ class _ProductManagementScreenState
                       
                       if (mounted) {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Opsi produk berhasil ditambahkan'),
-                            backgroundColor: Colors.green,
-                          ),
+                        CustomToast.success(
+                          context,
+                          'Opsi produk berhasil ditambahkan',
                         );
                       }
                     } catch (e) {
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Gagal menambah opsi: ${e.toString()}'),
-                            backgroundColor: Colors.red,
-                          ),
+                        CustomToast.error(
+                          context,
+                          'Gagal menambah opsi: ${e.toString()}',
                         );
                       }
                     }

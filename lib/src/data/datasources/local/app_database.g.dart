@@ -14439,6 +14439,1176 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   }
 }
 
+class $BusinessSettingsTableTable extends BusinessSettingsTable
+    with TableInfo<$BusinessSettingsTableTable, BusinessSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BusinessSettingsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _storeNameMeta = const VerificationMeta(
+    'storeName',
+  );
+  @override
+  late final GeneratedColumn<String> storeName = GeneratedColumn<String>(
+    'store_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _addressMeta = const VerificationMeta(
+    'address',
+  );
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+    'address',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _phoneNumberMeta = const VerificationMeta(
+    'phoneNumber',
+  );
+  @override
+  late final GeneratedColumn<String> phoneNumber = GeneratedColumn<String>(
+    'phone_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _logoPathMeta = const VerificationMeta(
+    'logoPath',
+  );
+  @override
+  late final GeneratedColumn<String> logoPath = GeneratedColumn<String>(
+    'logo_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _taxNumberMeta = const VerificationMeta(
+    'taxNumber',
+  );
+  @override
+  late final GeneratedColumn<String> taxNumber = GeneratedColumn<String>(
+    'tax_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    storeName,
+    address,
+    phoneNumber,
+    email,
+    logoPath,
+    taxNumber,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'business_settings_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BusinessSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('store_name')) {
+      context.handle(
+        _storeNameMeta,
+        storeName.isAcceptableOrUnknown(data['store_name']!, _storeNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_storeNameMeta);
+    }
+    if (data.containsKey('address')) {
+      context.handle(
+        _addressMeta,
+        address.isAcceptableOrUnknown(data['address']!, _addressMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addressMeta);
+    }
+    if (data.containsKey('phone_number')) {
+      context.handle(
+        _phoneNumberMeta,
+        phoneNumber.isAcceptableOrUnknown(
+          data['phone_number']!,
+          _phoneNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_phoneNumberMeta);
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('logo_path')) {
+      context.handle(
+        _logoPathMeta,
+        logoPath.isAcceptableOrUnknown(data['logo_path']!, _logoPathMeta),
+      );
+    }
+    if (data.containsKey('tax_number')) {
+      context.handle(
+        _taxNumberMeta,
+        taxNumber.isAcceptableOrUnknown(data['tax_number']!, _taxNumberMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BusinessSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BusinessSetting(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      storeName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}store_name'],
+      )!,
+      address: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}address'],
+      )!,
+      phoneNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone_number'],
+      )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      logoPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}logo_path'],
+      ),
+      taxNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tax_number'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $BusinessSettingsTableTable createAlias(String alias) {
+    return $BusinessSettingsTableTable(attachedDatabase, alias);
+  }
+}
+
+class BusinessSetting extends DataClass implements Insertable<BusinessSetting> {
+  final int id;
+  final String storeName;
+  final String address;
+  final String phoneNumber;
+  final String? email;
+  final String? logoPath;
+  final String? taxNumber;
+  final DateTime updatedAt;
+  const BusinessSetting({
+    required this.id,
+    required this.storeName,
+    required this.address,
+    required this.phoneNumber,
+    this.email,
+    this.logoPath,
+    this.taxNumber,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['store_name'] = Variable<String>(storeName);
+    map['address'] = Variable<String>(address);
+    map['phone_number'] = Variable<String>(phoneNumber);
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || logoPath != null) {
+      map['logo_path'] = Variable<String>(logoPath);
+    }
+    if (!nullToAbsent || taxNumber != null) {
+      map['tax_number'] = Variable<String>(taxNumber);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  BusinessSettingsTableCompanion toCompanion(bool nullToAbsent) {
+    return BusinessSettingsTableCompanion(
+      id: Value(id),
+      storeName: Value(storeName),
+      address: Value(address),
+      phoneNumber: Value(phoneNumber),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      logoPath: logoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(logoPath),
+      taxNumber: taxNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(taxNumber),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory BusinessSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BusinessSetting(
+      id: serializer.fromJson<int>(json['id']),
+      storeName: serializer.fromJson<String>(json['storeName']),
+      address: serializer.fromJson<String>(json['address']),
+      phoneNumber: serializer.fromJson<String>(json['phoneNumber']),
+      email: serializer.fromJson<String?>(json['email']),
+      logoPath: serializer.fromJson<String?>(json['logoPath']),
+      taxNumber: serializer.fromJson<String?>(json['taxNumber']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'storeName': serializer.toJson<String>(storeName),
+      'address': serializer.toJson<String>(address),
+      'phoneNumber': serializer.toJson<String>(phoneNumber),
+      'email': serializer.toJson<String?>(email),
+      'logoPath': serializer.toJson<String?>(logoPath),
+      'taxNumber': serializer.toJson<String?>(taxNumber),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  BusinessSetting copyWith({
+    int? id,
+    String? storeName,
+    String? address,
+    String? phoneNumber,
+    Value<String?> email = const Value.absent(),
+    Value<String?> logoPath = const Value.absent(),
+    Value<String?> taxNumber = const Value.absent(),
+    DateTime? updatedAt,
+  }) => BusinessSetting(
+    id: id ?? this.id,
+    storeName: storeName ?? this.storeName,
+    address: address ?? this.address,
+    phoneNumber: phoneNumber ?? this.phoneNumber,
+    email: email.present ? email.value : this.email,
+    logoPath: logoPath.present ? logoPath.value : this.logoPath,
+    taxNumber: taxNumber.present ? taxNumber.value : this.taxNumber,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  BusinessSetting copyWithCompanion(BusinessSettingsTableCompanion data) {
+    return BusinessSetting(
+      id: data.id.present ? data.id.value : this.id,
+      storeName: data.storeName.present ? data.storeName.value : this.storeName,
+      address: data.address.present ? data.address.value : this.address,
+      phoneNumber: data.phoneNumber.present
+          ? data.phoneNumber.value
+          : this.phoneNumber,
+      email: data.email.present ? data.email.value : this.email,
+      logoPath: data.logoPath.present ? data.logoPath.value : this.logoPath,
+      taxNumber: data.taxNumber.present ? data.taxNumber.value : this.taxNumber,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BusinessSetting(')
+          ..write('id: $id, ')
+          ..write('storeName: $storeName, ')
+          ..write('address: $address, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('email: $email, ')
+          ..write('logoPath: $logoPath, ')
+          ..write('taxNumber: $taxNumber, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    storeName,
+    address,
+    phoneNumber,
+    email,
+    logoPath,
+    taxNumber,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BusinessSetting &&
+          other.id == this.id &&
+          other.storeName == this.storeName &&
+          other.address == this.address &&
+          other.phoneNumber == this.phoneNumber &&
+          other.email == this.email &&
+          other.logoPath == this.logoPath &&
+          other.taxNumber == this.taxNumber &&
+          other.updatedAt == this.updatedAt);
+}
+
+class BusinessSettingsTableCompanion extends UpdateCompanion<BusinessSetting> {
+  final Value<int> id;
+  final Value<String> storeName;
+  final Value<String> address;
+  final Value<String> phoneNumber;
+  final Value<String?> email;
+  final Value<String?> logoPath;
+  final Value<String?> taxNumber;
+  final Value<DateTime> updatedAt;
+  const BusinessSettingsTableCompanion({
+    this.id = const Value.absent(),
+    this.storeName = const Value.absent(),
+    this.address = const Value.absent(),
+    this.phoneNumber = const Value.absent(),
+    this.email = const Value.absent(),
+    this.logoPath = const Value.absent(),
+    this.taxNumber = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  BusinessSettingsTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String storeName,
+    required String address,
+    required String phoneNumber,
+    this.email = const Value.absent(),
+    this.logoPath = const Value.absent(),
+    this.taxNumber = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : storeName = Value(storeName),
+       address = Value(address),
+       phoneNumber = Value(phoneNumber);
+  static Insertable<BusinessSetting> custom({
+    Expression<int>? id,
+    Expression<String>? storeName,
+    Expression<String>? address,
+    Expression<String>? phoneNumber,
+    Expression<String>? email,
+    Expression<String>? logoPath,
+    Expression<String>? taxNumber,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (storeName != null) 'store_name': storeName,
+      if (address != null) 'address': address,
+      if (phoneNumber != null) 'phone_number': phoneNumber,
+      if (email != null) 'email': email,
+      if (logoPath != null) 'logo_path': logoPath,
+      if (taxNumber != null) 'tax_number': taxNumber,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  BusinessSettingsTableCompanion copyWith({
+    Value<int>? id,
+    Value<String>? storeName,
+    Value<String>? address,
+    Value<String>? phoneNumber,
+    Value<String?>? email,
+    Value<String?>? logoPath,
+    Value<String?>? taxNumber,
+    Value<DateTime>? updatedAt,
+  }) {
+    return BusinessSettingsTableCompanion(
+      id: id ?? this.id,
+      storeName: storeName ?? this.storeName,
+      address: address ?? this.address,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      email: email ?? this.email,
+      logoPath: logoPath ?? this.logoPath,
+      taxNumber: taxNumber ?? this.taxNumber,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (storeName.present) {
+      map['store_name'] = Variable<String>(storeName.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (phoneNumber.present) {
+      map['phone_number'] = Variable<String>(phoneNumber.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (logoPath.present) {
+      map['logo_path'] = Variable<String>(logoPath.value);
+    }
+    if (taxNumber.present) {
+      map['tax_number'] = Variable<String>(taxNumber.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BusinessSettingsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('storeName: $storeName, ')
+          ..write('address: $address, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('email: $email, ')
+          ..write('logoPath: $logoPath, ')
+          ..write('taxNumber: $taxNumber, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PrinterSettingsTableTable extends PrinterSettingsTable
+    with TableInfo<$PrinterSettingsTableTable, PrinterSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PrinterSettingsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _printerTypeMeta = const VerificationMeta(
+    'printerType',
+  );
+  @override
+  late final GeneratedColumn<String> printerType = GeneratedColumn<String>(
+    'printer_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bluetoothAddressMeta = const VerificationMeta(
+    'bluetoothAddress',
+  );
+  @override
+  late final GeneratedColumn<String> bluetoothAddress = GeneratedColumn<String>(
+    'bluetooth_address',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _paperWidthMeta = const VerificationMeta(
+    'paperWidth',
+  );
+  @override
+  late final GeneratedColumn<int> paperWidth = GeneratedColumn<int>(
+    'paper_width',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(58),
+  );
+  static const VerificationMeta _fontSizeMeta = const VerificationMeta(
+    'fontSize',
+  );
+  @override
+  late final GeneratedColumn<String> fontSize = GeneratedColumn<String>(
+    'font_size',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('medium'),
+  );
+  static const VerificationMeta _autoPrintMeta = const VerificationMeta(
+    'autoPrint',
+  );
+  @override
+  late final GeneratedColumn<bool> autoPrint = GeneratedColumn<bool>(
+    'auto_print',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("auto_print" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _copiesMeta = const VerificationMeta('copies');
+  @override
+  late final GeneratedColumn<int> copies = GeneratedColumn<int>(
+    'copies',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _showHeaderMeta = const VerificationMeta(
+    'showHeader',
+  );
+  @override
+  late final GeneratedColumn<bool> showHeader = GeneratedColumn<bool>(
+    'show_header',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_header" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showFooterMeta = const VerificationMeta(
+    'showFooter',
+  );
+  @override
+  late final GeneratedColumn<bool> showFooter = GeneratedColumn<bool>(
+    'show_footer',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_footer" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showBarcodeMeta = const VerificationMeta(
+    'showBarcode',
+  );
+  @override
+  late final GeneratedColumn<bool> showBarcode = GeneratedColumn<bool>(
+    'show_barcode',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_barcode" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    printerType,
+    bluetoothAddress,
+    paperWidth,
+    fontSize,
+    autoPrint,
+    copies,
+    showHeader,
+    showFooter,
+    showBarcode,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'printer_settings_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PrinterSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('printer_type')) {
+      context.handle(
+        _printerTypeMeta,
+        printerType.isAcceptableOrUnknown(
+          data['printer_type']!,
+          _printerTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_printerTypeMeta);
+    }
+    if (data.containsKey('bluetooth_address')) {
+      context.handle(
+        _bluetoothAddressMeta,
+        bluetoothAddress.isAcceptableOrUnknown(
+          data['bluetooth_address']!,
+          _bluetoothAddressMeta,
+        ),
+      );
+    }
+    if (data.containsKey('paper_width')) {
+      context.handle(
+        _paperWidthMeta,
+        paperWidth.isAcceptableOrUnknown(data['paper_width']!, _paperWidthMeta),
+      );
+    }
+    if (data.containsKey('font_size')) {
+      context.handle(
+        _fontSizeMeta,
+        fontSize.isAcceptableOrUnknown(data['font_size']!, _fontSizeMeta),
+      );
+    }
+    if (data.containsKey('auto_print')) {
+      context.handle(
+        _autoPrintMeta,
+        autoPrint.isAcceptableOrUnknown(data['auto_print']!, _autoPrintMeta),
+      );
+    }
+    if (data.containsKey('copies')) {
+      context.handle(
+        _copiesMeta,
+        copies.isAcceptableOrUnknown(data['copies']!, _copiesMeta),
+      );
+    }
+    if (data.containsKey('show_header')) {
+      context.handle(
+        _showHeaderMeta,
+        showHeader.isAcceptableOrUnknown(data['show_header']!, _showHeaderMeta),
+      );
+    }
+    if (data.containsKey('show_footer')) {
+      context.handle(
+        _showFooterMeta,
+        showFooter.isAcceptableOrUnknown(data['show_footer']!, _showFooterMeta),
+      );
+    }
+    if (data.containsKey('show_barcode')) {
+      context.handle(
+        _showBarcodeMeta,
+        showBarcode.isAcceptableOrUnknown(
+          data['show_barcode']!,
+          _showBarcodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PrinterSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PrinterSetting(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      printerType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}printer_type'],
+      )!,
+      bluetoothAddress: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bluetooth_address'],
+      ),
+      paperWidth: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}paper_width'],
+      )!,
+      fontSize: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}font_size'],
+      )!,
+      autoPrint: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}auto_print'],
+      )!,
+      copies: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}copies'],
+      )!,
+      showHeader: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_header'],
+      )!,
+      showFooter: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_footer'],
+      )!,
+      showBarcode: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_barcode'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PrinterSettingsTableTable createAlias(String alias) {
+    return $PrinterSettingsTableTable(attachedDatabase, alias);
+  }
+}
+
+class PrinterSetting extends DataClass implements Insertable<PrinterSetting> {
+  final int id;
+  final String printerType;
+  final String? bluetoothAddress;
+  final int paperWidth;
+  final String fontSize;
+  final bool autoPrint;
+  final int copies;
+  final bool showHeader;
+  final bool showFooter;
+  final bool showBarcode;
+  final DateTime updatedAt;
+  const PrinterSetting({
+    required this.id,
+    required this.printerType,
+    this.bluetoothAddress,
+    required this.paperWidth,
+    required this.fontSize,
+    required this.autoPrint,
+    required this.copies,
+    required this.showHeader,
+    required this.showFooter,
+    required this.showBarcode,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['printer_type'] = Variable<String>(printerType);
+    if (!nullToAbsent || bluetoothAddress != null) {
+      map['bluetooth_address'] = Variable<String>(bluetoothAddress);
+    }
+    map['paper_width'] = Variable<int>(paperWidth);
+    map['font_size'] = Variable<String>(fontSize);
+    map['auto_print'] = Variable<bool>(autoPrint);
+    map['copies'] = Variable<int>(copies);
+    map['show_header'] = Variable<bool>(showHeader);
+    map['show_footer'] = Variable<bool>(showFooter);
+    map['show_barcode'] = Variable<bool>(showBarcode);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  PrinterSettingsTableCompanion toCompanion(bool nullToAbsent) {
+    return PrinterSettingsTableCompanion(
+      id: Value(id),
+      printerType: Value(printerType),
+      bluetoothAddress: bluetoothAddress == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bluetoothAddress),
+      paperWidth: Value(paperWidth),
+      fontSize: Value(fontSize),
+      autoPrint: Value(autoPrint),
+      copies: Value(copies),
+      showHeader: Value(showHeader),
+      showFooter: Value(showFooter),
+      showBarcode: Value(showBarcode),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory PrinterSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PrinterSetting(
+      id: serializer.fromJson<int>(json['id']),
+      printerType: serializer.fromJson<String>(json['printerType']),
+      bluetoothAddress: serializer.fromJson<String?>(json['bluetoothAddress']),
+      paperWidth: serializer.fromJson<int>(json['paperWidth']),
+      fontSize: serializer.fromJson<String>(json['fontSize']),
+      autoPrint: serializer.fromJson<bool>(json['autoPrint']),
+      copies: serializer.fromJson<int>(json['copies']),
+      showHeader: serializer.fromJson<bool>(json['showHeader']),
+      showFooter: serializer.fromJson<bool>(json['showFooter']),
+      showBarcode: serializer.fromJson<bool>(json['showBarcode']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'printerType': serializer.toJson<String>(printerType),
+      'bluetoothAddress': serializer.toJson<String?>(bluetoothAddress),
+      'paperWidth': serializer.toJson<int>(paperWidth),
+      'fontSize': serializer.toJson<String>(fontSize),
+      'autoPrint': serializer.toJson<bool>(autoPrint),
+      'copies': serializer.toJson<int>(copies),
+      'showHeader': serializer.toJson<bool>(showHeader),
+      'showFooter': serializer.toJson<bool>(showFooter),
+      'showBarcode': serializer.toJson<bool>(showBarcode),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  PrinterSetting copyWith({
+    int? id,
+    String? printerType,
+    Value<String?> bluetoothAddress = const Value.absent(),
+    int? paperWidth,
+    String? fontSize,
+    bool? autoPrint,
+    int? copies,
+    bool? showHeader,
+    bool? showFooter,
+    bool? showBarcode,
+    DateTime? updatedAt,
+  }) => PrinterSetting(
+    id: id ?? this.id,
+    printerType: printerType ?? this.printerType,
+    bluetoothAddress: bluetoothAddress.present
+        ? bluetoothAddress.value
+        : this.bluetoothAddress,
+    paperWidth: paperWidth ?? this.paperWidth,
+    fontSize: fontSize ?? this.fontSize,
+    autoPrint: autoPrint ?? this.autoPrint,
+    copies: copies ?? this.copies,
+    showHeader: showHeader ?? this.showHeader,
+    showFooter: showFooter ?? this.showFooter,
+    showBarcode: showBarcode ?? this.showBarcode,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  PrinterSetting copyWithCompanion(PrinterSettingsTableCompanion data) {
+    return PrinterSetting(
+      id: data.id.present ? data.id.value : this.id,
+      printerType: data.printerType.present
+          ? data.printerType.value
+          : this.printerType,
+      bluetoothAddress: data.bluetoothAddress.present
+          ? data.bluetoothAddress.value
+          : this.bluetoothAddress,
+      paperWidth: data.paperWidth.present
+          ? data.paperWidth.value
+          : this.paperWidth,
+      fontSize: data.fontSize.present ? data.fontSize.value : this.fontSize,
+      autoPrint: data.autoPrint.present ? data.autoPrint.value : this.autoPrint,
+      copies: data.copies.present ? data.copies.value : this.copies,
+      showHeader: data.showHeader.present
+          ? data.showHeader.value
+          : this.showHeader,
+      showFooter: data.showFooter.present
+          ? data.showFooter.value
+          : this.showFooter,
+      showBarcode: data.showBarcode.present
+          ? data.showBarcode.value
+          : this.showBarcode,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PrinterSetting(')
+          ..write('id: $id, ')
+          ..write('printerType: $printerType, ')
+          ..write('bluetoothAddress: $bluetoothAddress, ')
+          ..write('paperWidth: $paperWidth, ')
+          ..write('fontSize: $fontSize, ')
+          ..write('autoPrint: $autoPrint, ')
+          ..write('copies: $copies, ')
+          ..write('showHeader: $showHeader, ')
+          ..write('showFooter: $showFooter, ')
+          ..write('showBarcode: $showBarcode, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    printerType,
+    bluetoothAddress,
+    paperWidth,
+    fontSize,
+    autoPrint,
+    copies,
+    showHeader,
+    showFooter,
+    showBarcode,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PrinterSetting &&
+          other.id == this.id &&
+          other.printerType == this.printerType &&
+          other.bluetoothAddress == this.bluetoothAddress &&
+          other.paperWidth == this.paperWidth &&
+          other.fontSize == this.fontSize &&
+          other.autoPrint == this.autoPrint &&
+          other.copies == this.copies &&
+          other.showHeader == this.showHeader &&
+          other.showFooter == this.showFooter &&
+          other.showBarcode == this.showBarcode &&
+          other.updatedAt == this.updatedAt);
+}
+
+class PrinterSettingsTableCompanion extends UpdateCompanion<PrinterSetting> {
+  final Value<int> id;
+  final Value<String> printerType;
+  final Value<String?> bluetoothAddress;
+  final Value<int> paperWidth;
+  final Value<String> fontSize;
+  final Value<bool> autoPrint;
+  final Value<int> copies;
+  final Value<bool> showHeader;
+  final Value<bool> showFooter;
+  final Value<bool> showBarcode;
+  final Value<DateTime> updatedAt;
+  const PrinterSettingsTableCompanion({
+    this.id = const Value.absent(),
+    this.printerType = const Value.absent(),
+    this.bluetoothAddress = const Value.absent(),
+    this.paperWidth = const Value.absent(),
+    this.fontSize = const Value.absent(),
+    this.autoPrint = const Value.absent(),
+    this.copies = const Value.absent(),
+    this.showHeader = const Value.absent(),
+    this.showFooter = const Value.absent(),
+    this.showBarcode = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  PrinterSettingsTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String printerType,
+    this.bluetoothAddress = const Value.absent(),
+    this.paperWidth = const Value.absent(),
+    this.fontSize = const Value.absent(),
+    this.autoPrint = const Value.absent(),
+    this.copies = const Value.absent(),
+    this.showHeader = const Value.absent(),
+    this.showFooter = const Value.absent(),
+    this.showBarcode = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : printerType = Value(printerType);
+  static Insertable<PrinterSetting> custom({
+    Expression<int>? id,
+    Expression<String>? printerType,
+    Expression<String>? bluetoothAddress,
+    Expression<int>? paperWidth,
+    Expression<String>? fontSize,
+    Expression<bool>? autoPrint,
+    Expression<int>? copies,
+    Expression<bool>? showHeader,
+    Expression<bool>? showFooter,
+    Expression<bool>? showBarcode,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (printerType != null) 'printer_type': printerType,
+      if (bluetoothAddress != null) 'bluetooth_address': bluetoothAddress,
+      if (paperWidth != null) 'paper_width': paperWidth,
+      if (fontSize != null) 'font_size': fontSize,
+      if (autoPrint != null) 'auto_print': autoPrint,
+      if (copies != null) 'copies': copies,
+      if (showHeader != null) 'show_header': showHeader,
+      if (showFooter != null) 'show_footer': showFooter,
+      if (showBarcode != null) 'show_barcode': showBarcode,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  PrinterSettingsTableCompanion copyWith({
+    Value<int>? id,
+    Value<String>? printerType,
+    Value<String?>? bluetoothAddress,
+    Value<int>? paperWidth,
+    Value<String>? fontSize,
+    Value<bool>? autoPrint,
+    Value<int>? copies,
+    Value<bool>? showHeader,
+    Value<bool>? showFooter,
+    Value<bool>? showBarcode,
+    Value<DateTime>? updatedAt,
+  }) {
+    return PrinterSettingsTableCompanion(
+      id: id ?? this.id,
+      printerType: printerType ?? this.printerType,
+      bluetoothAddress: bluetoothAddress ?? this.bluetoothAddress,
+      paperWidth: paperWidth ?? this.paperWidth,
+      fontSize: fontSize ?? this.fontSize,
+      autoPrint: autoPrint ?? this.autoPrint,
+      copies: copies ?? this.copies,
+      showHeader: showHeader ?? this.showHeader,
+      showFooter: showFooter ?? this.showFooter,
+      showBarcode: showBarcode ?? this.showBarcode,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (printerType.present) {
+      map['printer_type'] = Variable<String>(printerType.value);
+    }
+    if (bluetoothAddress.present) {
+      map['bluetooth_address'] = Variable<String>(bluetoothAddress.value);
+    }
+    if (paperWidth.present) {
+      map['paper_width'] = Variable<int>(paperWidth.value);
+    }
+    if (fontSize.present) {
+      map['font_size'] = Variable<String>(fontSize.value);
+    }
+    if (autoPrint.present) {
+      map['auto_print'] = Variable<bool>(autoPrint.value);
+    }
+    if (copies.present) {
+      map['copies'] = Variable<int>(copies.value);
+    }
+    if (showHeader.present) {
+      map['show_header'] = Variable<bool>(showHeader.value);
+    }
+    if (showFooter.present) {
+      map['show_footer'] = Variable<bool>(showFooter.value);
+    }
+    if (showBarcode.present) {
+      map['show_barcode'] = Variable<bool>(showBarcode.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PrinterSettingsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('printerType: $printerType, ')
+          ..write('bluetoothAddress: $bluetoothAddress, ')
+          ..write('paperWidth: $paperWidth, ')
+          ..write('fontSize: $fontSize, ')
+          ..write('autoPrint: $autoPrint, ')
+          ..write('copies: $copies, ')
+          ..write('showHeader: $showHeader, ')
+          ..write('showFooter: $showFooter, ')
+          ..write('showBarcode: $showBarcode, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -14462,12 +15632,22 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CartItemsTable cartItems = $CartItemsTable(this);
   late final $AuditLogsTable auditLogs = $AuditLogsTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
+  late final $BusinessSettingsTableTable businessSettingsTable =
+      $BusinessSettingsTableTable(this);
+  late final $PrinterSettingsTableTable printerSettingsTable =
+      $PrinterSettingsTableTable(this);
   late final CartDao cartDao = CartDao(this as AppDatabase);
   late final IngredientDao ingredientDao = IngredientDao(this as AppDatabase);
   late final CategoryDao categoryDao = CategoryDao(this as AppDatabase);
   late final ProductDao productDao = ProductDao(this as AppDatabase);
   late final RecipeDao recipeDao = RecipeDao(this as AppDatabase);
   late final ProductOptionDao productOptionDao = ProductOptionDao(
+    this as AppDatabase,
+  );
+  late final BusinessSettingsDao businessSettingsDao = BusinessSettingsDao(
+    this as AppDatabase,
+  );
+  late final PrinterSettingsDao printerSettingsDao = PrinterSettingsDao(
     this as AppDatabase,
   );
   @override
@@ -14493,6 +15673,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cartItems,
     auditLogs,
     appSettings,
+    businessSettingsTable,
+    printerSettingsTable,
   ];
 }
 
@@ -25848,6 +27030,614 @@ typedef $$AppSettingsTableProcessedTableManager =
       AppSetting,
       PrefetchHooks Function()
     >;
+typedef $$BusinessSettingsTableTableCreateCompanionBuilder =
+    BusinessSettingsTableCompanion Function({
+      Value<int> id,
+      required String storeName,
+      required String address,
+      required String phoneNumber,
+      Value<String?> email,
+      Value<String?> logoPath,
+      Value<String?> taxNumber,
+      Value<DateTime> updatedAt,
+    });
+typedef $$BusinessSettingsTableTableUpdateCompanionBuilder =
+    BusinessSettingsTableCompanion Function({
+      Value<int> id,
+      Value<String> storeName,
+      Value<String> address,
+      Value<String> phoneNumber,
+      Value<String?> email,
+      Value<String?> logoPath,
+      Value<String?> taxNumber,
+      Value<DateTime> updatedAt,
+    });
+
+class $$BusinessSettingsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $BusinessSettingsTableTable> {
+  $$BusinessSettingsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get storeName => $composableBuilder(
+    column: $table.storeName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get logoPath => $composableBuilder(
+    column: $table.logoPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get taxNumber => $composableBuilder(
+    column: $table.taxNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$BusinessSettingsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $BusinessSettingsTableTable> {
+  $$BusinessSettingsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get storeName => $composableBuilder(
+    column: $table.storeName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get logoPath => $composableBuilder(
+    column: $table.logoPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get taxNumber => $composableBuilder(
+    column: $table.taxNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BusinessSettingsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BusinessSettingsTableTable> {
+  $$BusinessSettingsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get storeName =>
+      $composableBuilder(column: $table.storeName, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get logoPath =>
+      $composableBuilder(column: $table.logoPath, builder: (column) => column);
+
+  GeneratedColumn<String> get taxNumber =>
+      $composableBuilder(column: $table.taxNumber, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$BusinessSettingsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BusinessSettingsTableTable,
+          BusinessSetting,
+          $$BusinessSettingsTableTableFilterComposer,
+          $$BusinessSettingsTableTableOrderingComposer,
+          $$BusinessSettingsTableTableAnnotationComposer,
+          $$BusinessSettingsTableTableCreateCompanionBuilder,
+          $$BusinessSettingsTableTableUpdateCompanionBuilder,
+          (
+            BusinessSetting,
+            BaseReferences<
+              _$AppDatabase,
+              $BusinessSettingsTableTable,
+              BusinessSetting
+            >,
+          ),
+          BusinessSetting,
+          PrefetchHooks Function()
+        > {
+  $$BusinessSettingsTableTableTableManager(
+    _$AppDatabase db,
+    $BusinessSettingsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BusinessSettingsTableTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$BusinessSettingsTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$BusinessSettingsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> storeName = const Value.absent(),
+                Value<String> address = const Value.absent(),
+                Value<String> phoneNumber = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> logoPath = const Value.absent(),
+                Value<String?> taxNumber = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => BusinessSettingsTableCompanion(
+                id: id,
+                storeName: storeName,
+                address: address,
+                phoneNumber: phoneNumber,
+                email: email,
+                logoPath: logoPath,
+                taxNumber: taxNumber,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String storeName,
+                required String address,
+                required String phoneNumber,
+                Value<String?> email = const Value.absent(),
+                Value<String?> logoPath = const Value.absent(),
+                Value<String?> taxNumber = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => BusinessSettingsTableCompanion.insert(
+                id: id,
+                storeName: storeName,
+                address: address,
+                phoneNumber: phoneNumber,
+                email: email,
+                logoPath: logoPath,
+                taxNumber: taxNumber,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BusinessSettingsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BusinessSettingsTableTable,
+      BusinessSetting,
+      $$BusinessSettingsTableTableFilterComposer,
+      $$BusinessSettingsTableTableOrderingComposer,
+      $$BusinessSettingsTableTableAnnotationComposer,
+      $$BusinessSettingsTableTableCreateCompanionBuilder,
+      $$BusinessSettingsTableTableUpdateCompanionBuilder,
+      (
+        BusinessSetting,
+        BaseReferences<
+          _$AppDatabase,
+          $BusinessSettingsTableTable,
+          BusinessSetting
+        >,
+      ),
+      BusinessSetting,
+      PrefetchHooks Function()
+    >;
+typedef $$PrinterSettingsTableTableCreateCompanionBuilder =
+    PrinterSettingsTableCompanion Function({
+      Value<int> id,
+      required String printerType,
+      Value<String?> bluetoothAddress,
+      Value<int> paperWidth,
+      Value<String> fontSize,
+      Value<bool> autoPrint,
+      Value<int> copies,
+      Value<bool> showHeader,
+      Value<bool> showFooter,
+      Value<bool> showBarcode,
+      Value<DateTime> updatedAt,
+    });
+typedef $$PrinterSettingsTableTableUpdateCompanionBuilder =
+    PrinterSettingsTableCompanion Function({
+      Value<int> id,
+      Value<String> printerType,
+      Value<String?> bluetoothAddress,
+      Value<int> paperWidth,
+      Value<String> fontSize,
+      Value<bool> autoPrint,
+      Value<int> copies,
+      Value<bool> showHeader,
+      Value<bool> showFooter,
+      Value<bool> showBarcode,
+      Value<DateTime> updatedAt,
+    });
+
+class $$PrinterSettingsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $PrinterSettingsTableTable> {
+  $$PrinterSettingsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get printerType => $composableBuilder(
+    column: $table.printerType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bluetoothAddress => $composableBuilder(
+    column: $table.bluetoothAddress,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get paperWidth => $composableBuilder(
+    column: $table.paperWidth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fontSize => $composableBuilder(
+    column: $table.fontSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get autoPrint => $composableBuilder(
+    column: $table.autoPrint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get copies => $composableBuilder(
+    column: $table.copies,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showHeader => $composableBuilder(
+    column: $table.showHeader,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showFooter => $composableBuilder(
+    column: $table.showFooter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showBarcode => $composableBuilder(
+    column: $table.showBarcode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PrinterSettingsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $PrinterSettingsTableTable> {
+  $$PrinterSettingsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get printerType => $composableBuilder(
+    column: $table.printerType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bluetoothAddress => $composableBuilder(
+    column: $table.bluetoothAddress,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get paperWidth => $composableBuilder(
+    column: $table.paperWidth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fontSize => $composableBuilder(
+    column: $table.fontSize,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get autoPrint => $composableBuilder(
+    column: $table.autoPrint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get copies => $composableBuilder(
+    column: $table.copies,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showHeader => $composableBuilder(
+    column: $table.showHeader,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showFooter => $composableBuilder(
+    column: $table.showFooter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showBarcode => $composableBuilder(
+    column: $table.showBarcode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PrinterSettingsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PrinterSettingsTableTable> {
+  $$PrinterSettingsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get printerType => $composableBuilder(
+    column: $table.printerType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get bluetoothAddress => $composableBuilder(
+    column: $table.bluetoothAddress,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get paperWidth => $composableBuilder(
+    column: $table.paperWidth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get fontSize =>
+      $composableBuilder(column: $table.fontSize, builder: (column) => column);
+
+  GeneratedColumn<bool> get autoPrint =>
+      $composableBuilder(column: $table.autoPrint, builder: (column) => column);
+
+  GeneratedColumn<int> get copies =>
+      $composableBuilder(column: $table.copies, builder: (column) => column);
+
+  GeneratedColumn<bool> get showHeader => $composableBuilder(
+    column: $table.showHeader,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showFooter => $composableBuilder(
+    column: $table.showFooter,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showBarcode => $composableBuilder(
+    column: $table.showBarcode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$PrinterSettingsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PrinterSettingsTableTable,
+          PrinterSetting,
+          $$PrinterSettingsTableTableFilterComposer,
+          $$PrinterSettingsTableTableOrderingComposer,
+          $$PrinterSettingsTableTableAnnotationComposer,
+          $$PrinterSettingsTableTableCreateCompanionBuilder,
+          $$PrinterSettingsTableTableUpdateCompanionBuilder,
+          (
+            PrinterSetting,
+            BaseReferences<
+              _$AppDatabase,
+              $PrinterSettingsTableTable,
+              PrinterSetting
+            >,
+          ),
+          PrinterSetting,
+          PrefetchHooks Function()
+        > {
+  $$PrinterSettingsTableTableTableManager(
+    _$AppDatabase db,
+    $PrinterSettingsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PrinterSettingsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PrinterSettingsTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PrinterSettingsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> printerType = const Value.absent(),
+                Value<String?> bluetoothAddress = const Value.absent(),
+                Value<int> paperWidth = const Value.absent(),
+                Value<String> fontSize = const Value.absent(),
+                Value<bool> autoPrint = const Value.absent(),
+                Value<int> copies = const Value.absent(),
+                Value<bool> showHeader = const Value.absent(),
+                Value<bool> showFooter = const Value.absent(),
+                Value<bool> showBarcode = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => PrinterSettingsTableCompanion(
+                id: id,
+                printerType: printerType,
+                bluetoothAddress: bluetoothAddress,
+                paperWidth: paperWidth,
+                fontSize: fontSize,
+                autoPrint: autoPrint,
+                copies: copies,
+                showHeader: showHeader,
+                showFooter: showFooter,
+                showBarcode: showBarcode,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String printerType,
+                Value<String?> bluetoothAddress = const Value.absent(),
+                Value<int> paperWidth = const Value.absent(),
+                Value<String> fontSize = const Value.absent(),
+                Value<bool> autoPrint = const Value.absent(),
+                Value<int> copies = const Value.absent(),
+                Value<bool> showHeader = const Value.absent(),
+                Value<bool> showFooter = const Value.absent(),
+                Value<bool> showBarcode = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => PrinterSettingsTableCompanion.insert(
+                id: id,
+                printerType: printerType,
+                bluetoothAddress: bluetoothAddress,
+                paperWidth: paperWidth,
+                fontSize: fontSize,
+                autoPrint: autoPrint,
+                copies: copies,
+                showHeader: showHeader,
+                showFooter: showFooter,
+                showBarcode: showBarcode,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PrinterSettingsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PrinterSettingsTableTable,
+      PrinterSetting,
+      $$PrinterSettingsTableTableFilterComposer,
+      $$PrinterSettingsTableTableOrderingComposer,
+      $$PrinterSettingsTableTableAnnotationComposer,
+      $$PrinterSettingsTableTableCreateCompanionBuilder,
+      $$PrinterSettingsTableTableUpdateCompanionBuilder,
+      (
+        PrinterSetting,
+        BaseReferences<
+          _$AppDatabase,
+          $PrinterSettingsTableTable,
+          PrinterSetting
+        >,
+      ),
+      PrinterSetting,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -25891,4 +27681,8 @@ class $AppDatabaseManager {
       $$AuditLogsTableTableManager(_db, _db.auditLogs);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
+  $$BusinessSettingsTableTableTableManager get businessSettingsTable =>
+      $$BusinessSettingsTableTableTableManager(_db, _db.businessSettingsTable);
+  $$PrinterSettingsTableTableTableManager get printerSettingsTable =>
+      $$PrinterSettingsTableTableTableManager(_db, _db.printerSettingsTable);
 }

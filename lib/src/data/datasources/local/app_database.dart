@@ -10,6 +10,8 @@ import 'dao/category_dao.dart';
 import 'dao/product_dao.dart';
 import 'dao/recipe_dao.dart';
 import 'dao/product_option_dao.dart';
+import 'dao/business_settings_dao.dart';
+import 'dao/printer_settings_dao.dart';
 part 'app_database.g.dart';
 
 @DataClassName('Category')
@@ -337,6 +339,33 @@ class CartItems extends Table {
   TextColumn get syncStatus => text().withDefault(const Constant('pending'))();
 }
 
+@DataClassName('BusinessSetting')
+class BusinessSettingsTable extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get storeName => text()();
+  TextColumn get address => text()();
+  TextColumn get phoneNumber => text()();
+  TextColumn get email => text().nullable()();
+  TextColumn get logoPath => text().nullable()();
+  TextColumn get taxNumber => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DataClassName('PrinterSetting')
+class PrinterSettingsTable extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get printerType => text()(); // 'bluetooth', 'usb', 'network'
+  TextColumn get bluetoothAddress => text().nullable()();
+  IntColumn get paperWidth => integer().withDefault(const Constant(58))(); // 58 or 80
+  TextColumn get fontSize => text().withDefault(const Constant('medium'))(); // 'small', 'medium', 'large'
+  BoolColumn get autoPrint => boolean().withDefault(const Constant(false))();
+  IntColumn get copies => integer().withDefault(const Constant(1))();
+  BoolColumn get showHeader => boolean().withDefault(const Constant(true))();
+  BoolColumn get showFooter => boolean().withDefault(const Constant(true))();
+  BoolColumn get showBarcode => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 @DriftDatabase(
   tables: [
     Categories,
@@ -357,6 +386,8 @@ class CartItems extends Table {
     Users,
     AuditLogs,
     AppSettings,
+    BusinessSettingsTable,
+    PrinterSettingsTable,
   ],
   daos: [
     CartDao,
@@ -365,13 +396,15 @@ class CartItems extends Table {
     ProductDao,
     RecipeDao,
     ProductOptionDao,
+    BusinessSettingsDao,
+    PrinterSettingsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -380,7 +413,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        // Add migration logic here when schema version changes
+        if (from < 3) {
+          await m.createTable(businessSettingsTable);
+          await m.createTable(printerSettingsTable);
+        }
       },
     );
   }

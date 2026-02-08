@@ -1,19 +1,25 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../core/utils/responsive_helper.dart';
+import '../providers/dashboard_provider.dart';
 import 'pos_screen.dart';
 import 'cart_screen.dart';
 import 'transaction_history_screen.dart';
 import 'product_management_screen.dart';
 import 'category_management_screen.dart';
+import 'business_settings_screen.dart';
+import 'printer_settings_screen.dart';
 import '../widgets/custom_toast.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final responsive = ResponsiveHelper(context);
+    final dashboardStats = ref.watch(dashboardStatsProvider);
     
     return Scaffold(
       body: Container(
@@ -28,248 +34,303 @@ class DashboardScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: EdgeInsets.all(responsive.getResponsivePadding()),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF5E8C52), Color(0xFFA1B986)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF5E8C52).withOpacity(0.25),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Welcome Back!',
-                              style: TextStyle(
-                                fontSize: responsive.getResponsiveFontSize(portraitSize: 22, landscapeSize: 24),
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Sentosa POS System',
-                              style: TextStyle(
-                                fontSize: responsive.getResponsiveFontSize(portraitSize: 13, landscapeSize: 14),
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            Icons.storefront,
-                            size: responsive.getResponsiveIconSize(),
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Dashboard Stats Cards
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: responsive.getResponsivePadding()),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        _buildGlassmorphismCard(
-                          context,
-                          icon: Icons.inventory_2_outlined,
-                          title: 'Produk',
-                          value: '156',
-                          color: const Color(0xFF5E8C52),
-                          responsive: responsive,
-                        ),
-                        const SizedBox(width: 12),
-                        _buildGlassmorphismCard(
-                          context,
-                          icon: Icons.receipt_long,
-                          title: 'Transaksi',
-                          value: '1.2K',
-                          color: const Color(0xFF5E8C52),
-                          responsive: responsive,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _buildGlassmorphismCard(
-                      context,
-                      icon: Icons.payments,
-                      title: 'Omzet',
-                      value: 'Rp 15.5 Juta',
-                      color: const Color(0xFF5E8C52),
-                      responsive: responsive,
-                      isFullWidth: true,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Recent Notes Section
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: responsive.getResponsivePadding()),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: EdgeInsets.all(responsive.getResponsivePadding()),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF5E8C52), Color(0xFFA1B986)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
+                        color: const Color(0xFF5E8C52).withOpacity(0.25),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Nota Terbaru',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1A1A2A),
-                              letterSpacing: -0.3,
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  'Welcome Back!',
+                                  style: TextStyle(
+                                    fontSize: responsive.getResponsiveFontSize(portraitSize: 22, landscapeSize: 24),
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                              const SizedBox(height: 4),
+                              Text(
+                                  'Sentosa POS System',
+                                  style: TextStyle(
+                                    fontSize: responsive.getResponsiveFontSize(portraitSize: 13, landscapeSize: 14),
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
+                                ),
+                            ],
                           ),
-                          TextButton(
-                            onPressed: () {
-                              CustomToast.show(
-                                context,
-                                message: 'Lihat Semua',
-                                backgroundColor: const Color(0xFF5E8C52),
-                                textColor: Colors.white,
-                                icon: Icons.list,
-                              );
-                            },
-                            child: Text(
-                              'Lihat Semua',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF5E8C52),
-                              ),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(
+                              Icons.storefront,
+                              size: responsive.getResponsiveIconSize(),
+                              color: Colors.white,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      _buildRecentNoteCard(
-                        context,
-                        title: 'Transaksi #12345',
-                        subtitle: 'Kasir 1',
-                        amount: 'Rp 150.000',
-                        time: '10:30 AM',
-                        status: 'Selesai',
-                        color: const Color(0xFF5E8C52),
-                      ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              // Quick Actions Section
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: responsive.getResponsivePadding()),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
+                const SizedBox(height: 20),
+                // Dashboard Stats Cards
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: responsive.getResponsivePadding()),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: _buildQuickActionButton(
-                          context,
-                          icon: Icons.file_download,
-                          title: 'Export',
-                          color: const Color(0xFF5E8C52),
-                          onTap: () {
-                            CustomToast.show(
-                              context,
-                              message: 'Export coming soon!',
-                              backgroundColor: const Color(0xFF5E8C52),
-                              textColor: Colors.white,
-                              icon: Icons.file_download,
-                            );
-                          },
-                        ),
+                      Row(
+                        children: [
+                          _buildGlassmorphismCard(
+                            context,
+                            icon: Icons.inventory_2_outlined,
+                            title: 'Produk',
+                            value: dashboardStats.when(
+                              data: (stats) => stats.totalProducts.toString(),
+                              loading: () => '...',
+                              error: (_, __) => '0',
+                            ),
+                            color: const Color(0xFF5E8C52),
+                            responsive: responsive,
+                          ),
+                          const SizedBox(width: 12),
+                          _buildGlassmorphismCard(
+                            context,
+                            icon: Icons.receipt_long,
+                            title: 'Transaksi',
+                            value: dashboardStats.when(
+                              data: (stats) => stats.todayTransactions.toString(),
+                              loading: () => '...',
+                              error: (_, __) => '0',
+                            ),
+                            color: const Color(0xFF5E8C52),
+                            responsive: responsive,
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildQuickActionButton(
-                          context,
-                          icon: Icons.bar_chart,
-                          title: 'Analytic',
-                          color: const Color(0xFF5E8C52),
-                          onTap: () {
-                            // Simple chart placeholder - requires fl_chart package to be installed
-                            // Run: flutter pub add fl_chart
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('Chart requires fl_chart package. Run: flutter pub add fl_chart'),
-                                backgroundColor: const Color(0xFF5E8C52),
-                                duration: const Duration(seconds: 3),
-                              ),
-                            );
-                          },
+                      const SizedBox(height: 12),
+                      _buildGlassmorphismCard(
+                        context,
+                        icon: Icons.payments,
+                        title: 'Omzet',
+                        value: dashboardStats.when(
+                          data: (stats) => formatDashboardPrice(stats.todayRevenue),
+                          loading: () => '...',
+                          error: (_, __) => 'Rp 0',
                         ),
+                        color: const Color(0xFF5E8C52),
+                        responsive: responsive,
+                        isFullWidth: true,
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              // Menu Grid
-              Expanded(
-                child: Padding(
+                const SizedBox(height: 20),
+                // Recent Notes Section
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: responsive.getResponsivePadding()),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Nota Terbaru',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1A1A2A),
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const TransactionHistoryScreen(),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                'Lihat Semua',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF5E8C52),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        dashboardStats.when(
+                          data: (stats) {
+                            if (stats.recentOrders.isEmpty) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                child: Center(
+                                  child: Text(
+                                    'Belum ada transaksi hari ini',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            return Column(
+                              children: stats.recentOrders.map((order) {
+                                return _buildRecentNoteCard(
+                                  context,
+                                  title: order.orderNumber,
+                                  subtitle: 'Kasir',
+                                  amount: NumberFormat.currency(
+                                    locale: 'id_ID',
+                                    symbol: 'Rp',
+                                    decimalDigits: 0,
+                                  ).format(order.totalAmount),
+                                  time: DateFormat('HH:mm').format(order.orderDate),
+                                  status: order.status,
+                                  color: const Color(0xFF5E8C52),
+                                );
+                              }).toList(),
+                            );
+                          },
+                          loading: () => const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(20),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          error: (error, _) => Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Text(
+                                'Gagal memuat data',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.red[600],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Quick Actions Section
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: responsive.getResponsivePadding()),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildQuickActionButton(
+                            context,
+                            icon: Icons.file_download,
+                            title: 'Export',
+                            color: const Color(0xFF5E8C52),
+                            onTap: () {
+                              CustomToast.show(
+                                context,
+                                message: 'Export coming soon!',
+                                backgroundColor: const Color(0xFF5E8C52),
+                                textColor: Colors.white,
+                                icon: Icons.file_download,
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildQuickActionButton(
+                            context,
+                            icon: Icons.bar_chart,
+                            title: 'Analytic',
+                            color: const Color(0xFF5E8C52),
+                            onTap: () {
+                              // Simple chart placeholder - requires fl_chart package to be installed
+                              // Run: flutter pub add fl_chart
+                              CustomToast.info(
+                                context,
+                                'Chart requires fl_chart package. Run: flutter pub add fl_chart',
+                                duration: const Duration(seconds: 3),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Menu Grid
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: responsive.getResponsivePadding()),
                   child: GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     crossAxisCount: responsive.getDashboardGridColumns(),
                     crossAxisSpacing: responsive.getResponsiveSpacing(),
                     mainAxisSpacing: responsive.getResponsiveSpacing(),
@@ -325,60 +386,53 @@ class DashboardScreen extends StatelessWidget {
                         title: 'Pengaturan',
                         color: const Color(0xFF5E8C52),
                         onTap: () {
-                          // TODO: Navigate to settings screen
-                          CustomToast.show(
-                            context,
-                            message: 'Settings coming soon!',
-                            backgroundColor: const Color(0xFF5E8C52),
-                            textColor: Colors.white,
-                            icon: Icons.settings,
-                          );
+                          _showSettingsMenu(context);
                         },
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Footer
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: responsive.getResponsivePadding()),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Version 1.0.0',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                const SizedBox(height: 16),
+                // Footer
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: responsive.getResponsivePadding()),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
                           color: Colors.grey[600],
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Text(
+                          'Version 1.0.0',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
@@ -396,7 +450,7 @@ class DashboardScreen extends StatelessWidget {
   }) {
     return Flexible(
       child: TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 600),
+        duration: Duration.zero,
         tween: Tween(begin: 0, end: 1),
         builder: (context, animationValue, child) {
           return Transform.scale(
@@ -498,161 +552,171 @@ class DashboardScreen extends StatelessWidget {
                                   Text(
                                     title,
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                      letterSpacing: 0.3,
-                                      height: 1.2,
+                                      fontSize: responsive.getResponsiveFontSize(portraitSize: 11, landscapeSize: 12),
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white.withOpacity(0.85),
+                                      letterSpacing: -0.2,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     value,
                                     style: TextStyle(
-                                      fontSize: 20,
+                                      fontSize: responsive.getResponsiveFontSize(portraitSize: 18, landscapeSize: 20),
                                       fontWeight: FontWeight.w800,
-                                      color: Colors.black,
+                                      color: Colors.white,
                                       letterSpacing: -0.5,
-                                      height: 1.1,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
                             ),
                           ],
-                        ),
                     ),
                   ),
                 ),
               ),
-            );
-          },
-        ),
-      );
-    }
+            ),
+          );
+        },
+      ),
+    );
+  }
 
-  Widget _buildMenuIcon(
+  Widget _buildRecentNoteCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required String amount,
+    required String time,
+    required String status,
+    required Color color,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.08),
+            color.withOpacity(0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  color,
+                  color.withOpacity(0.7),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.receipt,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A2A),
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                amount,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A1A2A),
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                time,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(
     BuildContext context, {
     required IconData icon,
     required String title,
     required Color color,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        splashColor: color.withOpacity(0.15),
-        highlightColor: color.withOpacity(0.08),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-                spreadRadius: 0,
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-                spreadRadius: 0,
-              ),
-            ],
-            border: Border.all(
-              color: color.withOpacity(0.2),
-              width: 1.5,
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon Container
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                      spreadRadius: 0,
-                    ),
-                    BoxShadow(
-                      color: color.withOpacity(0.15),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Icon(
-                    icon,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Title
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1A1A2A),
-                  letterSpacing: -0.2,
-                  height: 1.2,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-}
-
-Widget _buildQuickActionButton(
-  BuildContext context, {
-  required IconData icon,
-  required String title,
-  required Color color,
-  required VoidCallback onTap,
-}) {
-  return Material(
-    color: Colors.transparent,
-    child: InkWell(
+    return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      splashColor: color.withOpacity(0.15),
-      highlightColor: color.withOpacity(0.08),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          gradient: LinearGradient(
+            colors: [
+              color.withOpacity(0.1),
+              color.withOpacity(0.05),
+            ],
+          ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: color.withOpacity(0.3),
+            color: color.withOpacity(0.2),
             width: 1.5,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
           children: [
             Icon(
               icon,
-              size: 20,
               color: color,
+              size: 24,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(height: 6),
             Text(
               title,
               style: TextStyle(
@@ -665,112 +729,191 @@ Widget _buildQuickActionButton(
           ],
         ),
       ),
-    ),
-  );
-}
-}
+    );
+  }
 
+  Widget _buildMenuIcon(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              color.withOpacity(0.12),
+              color.withOpacity(0.06),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withOpacity(0.25),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: color,
+              size: 28,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-Widget _buildRecentNoteCard(
-  BuildContext context, {
+  void _showSettingsMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Pengaturan',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1A1A2A),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                      color: Colors.grey[600],
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              _buildSettingsMenuItem(
+                icon: Icons.store,
+                title: 'Informasi Bisnis',
+                subtitle: 'Kelola informasi toko',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BusinessSettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+              _buildSettingsMenuItem(
+                icon: Icons.print,
+                title: 'Pengaturan Printer',
+                subtitle: 'Konfigurasi printer dan cetakan',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrinterSettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsMenuItem({
+    required IconData icon,
     required String title,
     required String subtitle,
-    required String amount,
-    required String time,
-    required String status,
-    required Color color,
+    required VoidCallback onTap,
   }) {
-  return Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: color.withOpacity(0.15),
-        width: 1,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.03),
-          blurRadius: 4,
-          offset: const Offset(0, 1),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1A1A2A),
-                  letterSpacing: -0.2,
-                ),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFF5E8C52).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[600],
-                ),
+              child: Icon(
+                icon,
+                color: const Color(0xFF5E8C52),
+                size: 24,
               ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    amount,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: color,
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A2A),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: status == 'Selesai'
-                          ? const Color(0xFF5E8C52)
-                          : Colors.grey[400],
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      status,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                time,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[500],
-                ),
-              ),
-            ],
-          ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.grey[400],
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Icon(
-          Icons.receipt_long,
-          size: 20,
-          color: color.withOpacity(0.3),
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }

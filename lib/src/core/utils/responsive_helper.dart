@@ -131,13 +131,14 @@ class ResponsiveHelper {
   /// Get responsive flex ratio for POS screen layout
   Map<String, int> getPOSFlexRatios() {
     if (isPortrait) {
-      // In portrait, cart takes more space at bottom
+      // In portrait, product area takes full screen (no cart area)
+      // Cart is accessible via separate screen
       return {
         'productArea': 1,
-        'cartArea': 1,
       };
     } else {
-      // In landscape, product area takes more space
+      // In landscape, product area takes more space (2:1 ratio)
+      // Cart area is shown alongside products
       return {
         'productArea': 2,
         'cartArea': 1,

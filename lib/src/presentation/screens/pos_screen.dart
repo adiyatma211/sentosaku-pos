@@ -1,17 +1,33 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../domain/entities/cart.dart' as cart_entity;
+import '../../domain/entities/order.dart' as order_entity;
+import '../../domain/entities/business_settings.dart';
+import '../../domain/entities/printer_settings.dart';
 import '../../core/utils/responsive_helper.dart';
 import '../providers/cart_provider.dart';
 import '../providers/global_providers.dart';
+import '../providers/domain_providers.dart';
+import '../providers/business_settings_provider.dart';
+import '../providers/printer_settings_provider.dart';
 import '../widgets/cart_summary_widget.dart';
 import '../widgets/product_customization_dialog.dart';
 import '../widgets/custom_toast.dart';
 import 'cart_screen.dart';
 import '../../data/datasources/local/app_database.dart';
+
+
+
+
+
 
 /// Point of Sale Screen
 /// Main screen for processing sales transactions
@@ -47,6 +63,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     // Load the cart when the screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(cartProvider.notifier).loadCart();
+      // Load business settings proactively
+      ref.read(businessSettingsProvider.notifier).loadBusinessSettings();
     });
   }
 
@@ -96,7 +114,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     // Debug log to track cart state changes
     print('DEBUG POS SCREEN: build() called - Cart state isLoading: ${cartState.isLoading}, hasValue: ${cartState.value != null}');
     if (cartState.value != null) {
-      print('DEBUG POS SCREEN: Cart ID: ${cartState.value!.id}, Items count: ${cartState.value!.items.length}');
+      final cartValue = cartState.value;
+      print('DEBUG POS SCREEN: Cart ID: ${cartValue?.id}, Items count: ${cartValue?.items.length}');
     }
     
     return Scaffold(
@@ -138,6 +157,12 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         builder: (context, constraints) {
           final flexRatios = responsive.getPOSFlexRatios();
           
+          // Debug logging for flexRatios
+          print('DEBUG POS SCREEN: flexRatios keys: ${flexRatios.keys.toList()}');
+          print('DEBUG POS SCREEN: flexRatios values: $flexRatios');
+          print('DEBUG POS SCREEN: has productArea key: ${flexRatios.containsKey('productArea')}');
+          print('DEBUG POS SCREEN: has cartArea key: ${flexRatios.containsKey('cartArea')}');
+          
           if (responsive.useColumnLayout) {
             return _buildPortraitLayout(cartState, cartNotifier, responsive, flexRatios);
           } else {
@@ -149,16 +174,22 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   }
 
   /// Build portrait layout (column layout)
+  /// In portrait mode, only show product grid (full screen)
+  /// Cart is accessible via separate screen through the cart button in app bar
   Widget _buildPortraitLayout(
     AsyncValue<cart_entity.Cart> cartState,
     CartNotifier cartNotifier,
     ResponsiveHelper responsive,
     Map<String, int> flexRatios,
   ) {
+    final productAreaFlex = flexRatios['productArea'] ?? 1;
+    print('DEBUG POS SCREEN: _buildPortraitLayout - productAreaFlex: $productAreaFlex (full screen products only)');
+    
     return Column(
       children: [
+        // Product area takes full screen
         Expanded(
-          flex: flexRatios['productArea']!,
+          flex: productAreaFlex,
           child: Column(
             children: [
               // Category dropdown and search
@@ -181,11 +212,15 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     ResponsiveHelper responsive,
     Map<String, int> flexRatios,
   ) {
+    final productAreaFlex = flexRatios['productArea'] ?? 2;
+    final cartAreaFlex = flexRatios['cartArea'] ?? 1;
+    print('DEBUG POS SCREEN: _buildLandscapeLayout - productAreaFlex: $productAreaFlex, cartAreaFlex: $cartAreaFlex');
+    
     return Row(
       children: [
         // Product selection area
         Expanded(
-          flex: flexRatios['productArea']!,
+          flex: productAreaFlex,
           child: Column(
             children: [
               // Category dropdown and search
@@ -199,7 +234,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         ),
         // Cart area
         Expanded(
-          flex: flexRatios['cartArea']!,
+          flex: cartAreaFlex,
           child: _buildCartArea(cartState, cartNotifier),
         ),
       ],
@@ -527,6 +562,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     AsyncValue<cart_entity.Cart> cartState,
     CartNotifier cartNotifier,
   ) {
+    final responsive = ResponsiveHelper(context);
+    final isHorizontalLayout = !responsive.useColumnLayout;
+    
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -561,15 +599,26 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 ],
               ),
               child: CartSummaryWidget(
-                cart: cartState.value!,
+                cart: cartState.value ?? cart_entity.Cart(
+                  id: 0,
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                ),
                 onCheckout: () {
-                  if (cartState.value != null && cartState.value!.items.isNotEmpty) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (context) => const CartScreen(),
-                      ),
-                    );
+                  final cartValue = cartState.value;
+                  if (cartValue != null && cartValue.items.isNotEmpty) {
+                    if (isHorizontalLayout) {
+                      // Show dialog popup in horizontal layout
+                      _showCartDialog(cartValue);
+                    } else {
+                      // Navigate to cart screen in vertical layout
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (context) => const CartScreen(),
+                        ),
+                      );
+                    }
                   }
                 },
                 onClear: cartNotifier.clearCart,
@@ -577,6 +626,484 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  /// Show cart dialog popup (for horizontal layout)
+  void _showCartDialog(cart_entity.Cart cart) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(
+              maxWidth: 600,
+              maxHeight: 700,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white,
+                  const Color(0xFF5E8C52).withOpacity(0.02),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Dialog Header
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF5E8C52), Color(0xFFA1B986)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.shopping_cart,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Cart Details',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        tooltip: 'Close',
+                      ),
+                    ],
+                  ),
+                ),
+                // Cart Items
+                Expanded(
+                  child: cart.items.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.shopping_cart_outlined,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Cart is empty',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: cart.items.length,
+                          itemBuilder: (context, index) {
+                            final item = cart.items[index];
+                            return _buildCartItemForDialog(item);
+                          },
+                        ),
+                ),
+                // Cart Summary
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F7FA),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Summary Rows
+                      _buildDialogSummaryRow(
+                        label: 'Subtotal',
+                        value: _formatPrice(cart.subtotal.toInt()),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildDialogSummaryRow(
+                        label: 'Tax',
+                        value: _formatPrice(cart.taxAmount.toInt()),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildDialogSummaryRow(
+                        label: 'Discount',
+                        value: _formatPrice(cart.discountAmount.toInt()),
+                        isDiscount: true,
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        height: 1,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              const Color(0xFF5E8C52).withOpacity(0.3),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Total
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1A1A2A),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF5E8C52), Color(0xFFA1B986)],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF5E8C52).withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              _formatPrice(cart.totalAmount.toInt()),
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      // Pay Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: cart.items.isEmpty
+                              ? null
+                              : () {
+                                  Navigator.of(dialogContext).pop();
+                                  _processPayment(cart);
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: cart.items.isEmpty
+                                ? Colors.grey[300]
+                                : null,
+                            disabledBackgroundColor: Colors.grey[300],
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: cart.items.isEmpty
+                              ? const Text(
+                                  'Bayar',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.grey,
+                                  ),
+                                )
+                              : Container(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF5E8C52), Color(0xFFA1B986)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.payment_rounded,
+                                        size: 24,
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text(
+                                        'Bayar',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Build cart item for dialog
+  Widget _buildCartItemForDialog(cart_entity.CartItem item) {
+    return FutureBuilder<Product?>(
+      future: ref.read(productDaoProvider).getProductById(item.productId),
+      builder: (context, snapshot) {
+        final product = snapshot.data;
+        final productName = product?.name ?? 'Product ${item.productId}';
+        
+        // Parse notes JSON if available
+        Map<String, dynamic>? notesData;
+        if (item.notes != null && item.notes!.isNotEmpty) {
+          try {
+            final notesValue = item.notes;
+            if (notesValue != null) {
+              notesData = jsonDecode(notesValue) as Map<String, dynamic>;
+            }
+          } catch (e) {
+            // If parsing fails, notesData remains null
+          }
+        }
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [
+                Colors.white,
+                const Color(0xFF5E8C52).withOpacity(0.02),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF5E8C52).withOpacity(0.08),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(
+              color: const Color(0xFF5E8C52).withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Product Icon
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF5E8C52).withOpacity(0.15),
+                      const Color(0xFFA1B986).withOpacity(0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.local_cafe,
+                  size: 28,
+                  color: Color(0xFF5E8C52),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Product Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      productName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: Color(0xFF1A1A2A),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Display variant if exists
+                    if (item.variantId != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF5E8C52).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Variant ${item.variantId}',
+                          style: const TextStyle(
+                            color: Color(0xFF5E8C52),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    // Display options if available
+                    if (notesData != null && notesData.containsKey('options'))
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFA1B986).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Options: ${_formatOptions(notesData['options'] as Map<String, dynamic>)}',
+                          style: const TextStyle(
+                            color: Color(0xFF5E8C52),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          '${item.quantity}x',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: Color(0xFF5E8C52),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatPrice(item.totalPrice.toInt()),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: Color(0xFF1A1A2A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Format options for display
+  String _formatOptions(Map<String, dynamic> options) {
+    final optionsList = <String>[];
+    for (final entry in options.entries) {
+      final valueIds = entry.value;
+      if (valueIds is List && valueIds.isNotEmpty) {
+        optionsList.add('${valueIds.length} option(s)');
+      }
+    }
+    return optionsList.join(', ');
+  }
+
+  /// Build summary row for dialog
+  Widget _buildDialogSummaryRow({
+    required String label,
+    required String value,
+    bool isDiscount = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[700],
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: isDiscount
+                ? const Color(0xFFFF6B6B)
+                : const Color(0xFF1A1A2A),
+          ),
+        ),
+      ],
     );
   }
 
@@ -630,7 +1157,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               color: Color(0xFF5E8C52),
             ),
           )
-        : cartState.value == null || cartState.value!.items.isEmpty
+        : cartState.value == null || (cartState.value?.items.isEmpty ?? true)
             ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -654,9 +1181,13 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               )
             : ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: cartState.value!.items.length,
+                itemCount: cartState.value?.items.length ?? 0,
                 itemBuilder: (context, index) {
-                  final item = cartState.value!.items[index];
+                  final cartValue = cartState.value;
+                  if (cartValue == null || index >= cartValue.items.length) {
+                    return const SizedBox.shrink();
+                  }
+                  final item = cartValue.items[index];
                   return _buildCartItem(item);
                 },
               );
@@ -732,7 +1263,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   /// Build product card
   Widget _buildProductCard(Product product) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+      duration: Duration.zero,
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -774,12 +1305,10 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 product: product,
                 onAddToCart: () {
                   // Show toast notification when product is added to cart
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${product.name} added to cart'),
-                      backgroundColor: const Color(0xFF5E8C52),
-                      duration: const Duration(seconds: 2),
-                    ),
+                  CustomToast.success(
+                    context,
+                    '${product.name} added to cart',
+                    duration: const Duration(seconds: 2),
                   );
                 },
               ),
@@ -833,7 +1362,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                         children: [
                           Flexible(
                             child: Text(
-                              'Rp ${_formatPrice(product.price)}',
+                              _formatPrice(product.price),
                               style: const TextStyle(
                                 color: Color(0xFF5E8C52),
                                 fontWeight: FontWeight.w800,
@@ -967,14 +1496,17 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         Map<String, dynamic>? notesData;
         if (item.notes != null && item.notes!.isNotEmpty) {
           try {
-            notesData = jsonDecode(item.notes!) as Map<String, dynamic>;
+            final notesValue = item.notes;
+            if (notesValue != null) {
+              notesData = jsonDecode(notesValue) as Map<String, dynamic>;
+            }
           } catch (e) {
             // If parsing fails, notesData remains null
           }
         }
         
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: Duration.zero,
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -1112,7 +1644,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              'Rp ${_formatPrice(item.totalPrice.toInt())}',
+                              _formatPrice(item.totalPrice.toInt()),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
@@ -1419,7 +1951,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     if (cat == null) return 0;
     
     // Count products in this category
-    return _products.where((p) => p.categoryId == cat!.id).length;
+    final categoryId = cat?.id;
+    if (categoryId == null) return 0;
+    return _products.where((p) => p.categoryId == categoryId).length;
   }
 
   /// Format price with thousands separator (Indonesian format)
@@ -1446,7 +1980,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       }
       
       if (cat != null) {
-        products = products.where((p) => p.categoryId == cat!.id).toList();
+        final categoryId = cat.id;
+        products = products.where((p) => p.categoryId == categoryId).toList();
       } else {
         products = [];
       }
@@ -1464,5 +1999,946 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     }
     
     return products;
+    }
+  
+    /// Process payment for the cart
+    Future<void> _processPayment(cart_entity.Cart cart) async {
+      if (cart.items.isEmpty) {
+        CustomToast.show(
+          context,
+          message: 'Cart is empty',
+          backgroundColor: const Color(0xFFFF6B6B),
+          textColor: Colors.white,
+          icon: Icons.error_outline,
+        );
+        return;
+      }
+  
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext loadingContext) {
+          return const Center(
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(
+                      color: Color(0xFF5E8C52),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Processing payment...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+  
+      try {
+        // Process the checkout
+        await ref.read(cartProvider.notifier).checkout();
+  
+        // Close loading dialog
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
+  
+        // Show success dialog with receipt options
+        if (context.mounted) {
+          _showPaymentSuccessDialog(cart);
+        }
+      } catch (e) {
+        // Close loading dialog
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
+  
+        // Show error message
+        if (context.mounted) {
+          CustomToast.show(
+            context,
+            message: 'Payment failed: ${e.toString()}',
+            backgroundColor: const Color(0xFFFF6B6B),
+            textColor: Colors.white,
+            icon: Icons.error_outline,
+          );
+        }
+      }
+    }
+  
+    /// Show payment success dialog with share and print options
+    void _showPaymentSuccessDialog(cart_entity.Cart cart) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Container(
+              constraints: const BoxConstraints(
+                maxWidth: 450,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white,
+                    const Color(0xFF5E8C52).withOpacity(0.02),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Success Icon
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF5E8C52), Color(0xFFA1B986)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: const Icon(
+                            Icons.check_circle_rounded,
+                            color: Colors.white,
+                            size: 64,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Pembayaran Berhasil!',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Total: ${_formatPrice(cart.totalAmount.toInt())}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Action Buttons
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 8),
+                        // Share Nota Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              _shareReceipt(cart);
+                            },
+                            icon: const Icon(Icons.share_rounded, size: 24),
+                            label: const Text(
+                              'Share Nota',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF5E8C52),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Print Nota Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              _printReceipt(cart);
+                            },
+                            icon: const Icon(Icons.print_rounded, size: 24),
+                            label: const Text(
+                              'Print Nota',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFF5E8C52),
+                              elevation: 0,
+                              side: const BorderSide(
+                                color: Color(0xFF5E8C52),
+                                width: 2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Close Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey[600],
+                              side: BorderSide(
+                                color: Colors.grey[300]!,
+                                width: 1,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Tutup',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+  
+    /// Share receipt
+    Future<void> _shareReceipt(cart_entity.Cart cart) async {
+      try {
+        print('DEBUG: Starting share receipt process for cart ID: ${cart.id}');
+        
+        // Generate receipt content
+        final receiptService = ref.read(receiptServiceProvider);
+        final productDao = ref.read(productDaoProvider);
+        
+        // Create a mock order for receipt generation
+        print('DEBUG: Creating order for receipt generation');
+        final order = order_entity.Order(
+          id: 0,
+          uuid: 'temp-uuid',
+          orderNumber: 'POS-${DateTime.now().millisecondsSinceEpoch}',
+          subtotal: cart.subtotal.toInt(),
+          taxAmount: cart.taxAmount.toInt(),
+          discountAmount: cart.discountAmount.toInt(),
+          totalAmount: cart.totalAmount.toInt(),
+          paidAmount: cart.totalAmount.toInt(),
+          changeAmount: 0,
+          status: 'paid',
+          paymentStatus: 'paid',
+          paymentMethod: 'cash',
+          orderDate: DateTime.now(),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          isDeleted: false,
+          syncStatus: 'pending',
+          items: await Future.wait(cart.items.map((item) async {
+            final product = await productDao.getProductById(item.productId);
+            return order_entity.OrderItem(
+              id: 0,
+              uuid: 'temp-item-uuid',
+              orderId: 0,
+              productId: item.productId,
+              productName: product?.name ?? 'Product ${item.productId}',
+              quantity: item.quantity,
+              unitPrice: item.unitPrice.toInt(),
+              totalPrice: item.totalPrice.toInt(),
+              discountAmount: 0,
+              notes: item.notes,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+              isDeleted: false,
+              syncStatus: 'pending',
+            );
+          }).toList()),
+        );
+  
+        // Ensure business settings are loaded
+        final businessSettingsState = ref.read(businessSettingsProvider);
+        print('DEBUG RECEIPT: businessSettingsState.settings.isEmpty: ${businessSettingsState.settings.isEmpty}');
+        print('DEBUG RECEIPT: businessSettingsState.isLoading: ${businessSettingsState.isLoading}');
+        print('DEBUG RECEIPT: businessSettingsState.settings.length: ${businessSettingsState.settings.length}');
+        if (businessSettingsState.settings.isEmpty && !businessSettingsState.isLoading) {
+          print('DEBUG RECEIPT: Loading business settings...');
+          await ref.read(businessSettingsProvider.notifier).loadBusinessSettings();
+          print('DEBUG RECEIPT: Business settings loaded');
+        }
+        final businessSettings = ref.read(businessSettingsProvider).settings.firstOrNull;
+        print('DEBUG RECEIPT: businessSettings is null: ${businessSettings == null}');
+        if (businessSettings != null) {
+          print('DEBUG RECEIPT: businessSettings.storeName: ${businessSettings.storeName}');
+          print('DEBUG RECEIPT: businessSettings.address: ${businessSettings.address}');
+          print('DEBUG RECEIPT: businessSettings.phoneNumber: ${businessSettings.phoneNumber}');
+        }
+
+        // Ensure printer settings are loaded
+        final printerSettingsState = ref.read(printerSettingsProvider);
+        if (printerSettingsState.settings.isEmpty && !printerSettingsState.isLoading) {
+          await ref.read(printerSettingsProvider.notifier).loadPrinterSettings();
+        }
+        final printerSettings = ref.read(printerSettingsProvider).settings.firstOrNull;
+        final receiptContent = await receiptService.generateReceipt(
+          order: order,
+          businessSettings: businessSettings,
+          printerSettings: printerSettings,
+        );
+        print('DEBUG: Receipt content generated');
+        
+        // Generate PDF
+        print('DEBUG: Generating PDF...');
+        final pdfFile = await _generateReceiptPdf(order, receiptContent, businessSettings);
+        print('DEBUG: PDF generated at: ${pdfFile.path}');
+        
+        // Share via WhatsApp
+        await _shareViaWhatsApp(pdfFile);
+        
+        print('DEBUG: Share receipt process completed successfully');
+        if (context.mounted) {
+          CustomToast.show(
+            context,
+            message: 'Receipt shared successfully',
+            backgroundColor: const Color(0xFF5E8C52),
+            textColor: Colors.white,
+            icon: Icons.check_circle_outline,
+          );
+        }
+      } catch (e) {
+        print('ERROR: Failed to share receipt: ${e.toString()}');
+        print('ERROR: Stack trace: ${StackTrace.current}');
+        if (context.mounted) {
+          CustomToast.show(
+            context,
+            message: 'Failed to share receipt: ${e.toString()}',
+            backgroundColor: const Color(0xFFFF6B6B),
+            textColor: Colors.white,
+            icon: Icons.error_outline,
+          );
+        }
+      }
+    }
+    
+    /// Generate PDF from receipt
+    Future<File> _generateReceiptPdf(order_entity.Order order, String receiptContent, BusinessSettings? businessSettings) async {
+      final pdf = pw.Document();
+      
+      // Parse receipt content to extract information
+      final lines = receiptContent.split('\n');
+      
+      // Create PDF
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(32),
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                // Header
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.black, width: 2),
+                  ),
+                  child: pw.Column(
+                    children: [
+                      pw.Text(
+                        businessSettings != null ? businessSettings.storeName.toUpperCase() : 'SENTOSA POS',
+                        style: pw.TextStyle(
+                          fontSize: 24,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Text(
+                        'Receipt',
+                        style: pw.TextStyle(
+                          fontSize: 18,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 24),
+                
+                // Business Info
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey300, width: 1),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        businessSettings != null ? businessSettings.storeName : 'Sentosa Cafe',
+                        style: pw.TextStyle(
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(businessSettings != null ? businessSettings.address : '123 Main Street, Jakarta'),
+                      pw.Text(businessSettings != null ? 'Phone: ${businessSettings.phoneNumber}' : 'Phone: +62 812 3456'),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 24),
+                
+                // Order Info
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey100,
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'Order #:',
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          ),
+                          pw.Text(order.orderNumber),
+                        ],
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'Date:',
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          ),
+                          pw.Text(_formatDate(order.orderDate)),
+                        ],
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'Time:',
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          ),
+                          pw.Text(_formatTime(order.orderDate)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 24),
+                
+                // Items
+                pw.Container(
+                  width: double.infinity,
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey300, width: 1),
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    children: [
+                      pw.Container(
+                        width: double.infinity,
+                        padding: const pw.EdgeInsets.all(12),
+                        decoration: pw.BoxDecoration(
+                          color: PdfColors.grey200,
+                          borderRadius: const pw.BorderRadius.only(
+                            topLeft: pw.Radius.circular(8),
+                            topRight: pw.Radius.circular(8),
+                          ),
+                        ),
+                        child: pw.Text(
+                          'Items',
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(12),
+                        child: pw.Column(
+                          children: (order.items ?? []).map((item) {
+                            return pw.Container(
+                              margin: const pw.EdgeInsets.only(bottom: 12),
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Row(
+                                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      pw.Expanded(
+                                        child: pw.Text(
+                                          '${item.quantity}x ${item.productName}',
+                                          style: pw.TextStyle(
+                                            fontWeight: pw.FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      pw.Text(
+                                        '\$${item.totalPrice.toStringAsFixed(2)}',
+                                        style: pw.TextStyle(
+                                          fontWeight: pw.FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (item.variantName != null) ...[
+                                    pw.SizedBox(height: 4),
+                                    pw.Text(
+                                      '  Variant: ${item.variantName}',
+                                      style: pw.TextStyle(
+                                        fontSize: 10,
+                                        color: PdfColors.grey700,
+                                      ),
+                                    ),
+                                  ],
+                                  pw.SizedBox(height: 4),
+                                  pw.Text(
+                                    '  Price: \$${item.unitPrice.toStringAsFixed(2)} each',
+                                    style: pw.TextStyle(
+                                      fontSize: 10,
+                                      color: PdfColors.grey700,
+                                    ),
+                                  ),
+                                  if (item.notes != null && item.notes!.isNotEmpty) ...[
+                                    pw.SizedBox(height: 4),
+                                    pw.Text(
+                                      '  Notes: ${item.notes}',
+                                      style: pw.TextStyle(
+                                        fontSize: 10,
+                                        color: PdfColors.grey700,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 24),
+                
+                // Totals
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.black, width: 2),
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    children: [
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Subtotal:'),
+                          pw.Text('\$${order.subtotal.toStringAsFixed(2)}'),
+                        ],
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Tax (10%):'),
+                          pw.Text('\$${order.taxAmount.toStringAsFixed(2)}'),
+                        ],
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Discount:'),
+                          pw.Text('\$${order.discountAmount.toStringAsFixed(2)}'),
+                        ],
+                      ),
+                      pw.Divider(),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'Total:',
+                            style: pw.TextStyle(
+                              fontSize: 18,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                          pw.Text(
+                            '\$${order.totalAmount.toStringAsFixed(2)}',
+                            style: pw.TextStyle(
+                              fontSize: 18,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 24),
+                
+                // Payment Info
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey100,
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'Payment Information',
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Payment Method:'),
+                          pw.Text(order.paymentMethod?.toUpperCase() ?? 'CASH'),
+                        ],
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Paid:'),
+                          pw.Text('\$${order.paidAmount.toStringAsFixed(2)}'),
+                        ],
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Change:'),
+                          pw.Text('\$${(order.paidAmount - order.totalAmount).toStringAsFixed(2)}'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                pw.Spacer(),
+                
+                // Footer
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.black, width: 2),
+                  ),
+                  child: pw.Column(
+                    children: [
+                      pw.Text(
+                        'Thank you for your purchase!',
+                        style: pw.TextStyle(
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Text('Please come again soon.'),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+      
+      // Save PDF to file
+      // Use getApplicationDocumentsDirectory() instead of getTemporaryDirectory()
+      // because the temporary directory is app-private and not accessible by other apps
+      final output = await getApplicationDocumentsDirectory();
+      final file = File('${output.path}/receipt_${order.orderNumber}.pdf');
+      
+      print('DEBUG: Saving PDF to: ${file.path}');
+      await file.writeAsBytes(await pdf.save());
+      
+      // Verify file was created successfully
+      if (!await file.exists()) {
+        throw Exception('PDF file was not created successfully');
+      }
+      
+      print('DEBUG: PDF created successfully, size: ${await file.length()} bytes');
+      return file;
+    }
+    
+    /// Share PDF via WhatsApp
+    Future<void> _shareViaWhatsApp(File pdfFile) async {
+      try {
+        print('DEBUG: Starting share process for file: ${pdfFile.path}');
+        
+        // Verify file exists before sharing
+        if (!await pdfFile.exists()) {
+          print('ERROR: File does not exist: ${pdfFile.path}');
+          throw Exception('PDF file does not exist at: ${pdfFile.path}');
+        }
+        
+        final fileSize = await pdfFile.length();
+        print('DEBUG: File exists, size: $fileSize bytes');
+        
+        if (fileSize == 0) {
+          print('ERROR: File is empty: ${pdfFile.path}');
+          throw Exception('PDF file is empty');
+        }
+        
+        // Use share_plus to share the PDF file
+        // This will open the share sheet where user can select WhatsApp
+        print('DEBUG: Calling Share.shareXFiles...');
+        await Share.shareXFiles(
+          [XFile(pdfFile.path)],
+          text: 'Here is your receipt from Sentosa Cafe',
+          subject: 'Receipt - Sentosa Cafe',
+        );
+        
+        print('DEBUG: Share completed successfully');
+      } catch (e) {
+        print('ERROR: Failed to share via WhatsApp: ${e.toString()}');
+        print('ERROR: Stack trace: ${StackTrace.current}');
+        throw Exception('Failed to share via WhatsApp: ${e.toString()}');
+      }
+    }
+    
+    /// Format date for display
+    String _formatDate(DateTime date) {
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+    }
+    
+    /// Format time for display
+    String _formatTime(DateTime date) {
+      final hour = date.hour.toString().padLeft(2, '0');
+      final minute = date.minute.toString().padLeft(2, '0');
+      final second = date.second.toString().padLeft(2, '0');
+      return '$hour:$minute:$second';
+    }
+  
+    /// Print receipt
+    Future<void> _printReceipt(cart_entity.Cart cart) async {
+      try {
+        // Generate receipt content
+        final receiptService = ref.read(receiptServiceProvider);
+        final productDao = ref.read(productDaoProvider);
+        
+        // Create a mock order for receipt generation
+        final order = order_entity.Order(
+          id: 0,
+          uuid: 'temp-uuid',
+          orderNumber: 'POS-${DateTime.now().millisecondsSinceEpoch}',
+          subtotal: cart.subtotal.toInt(),
+          taxAmount: cart.taxAmount.toInt(),
+          discountAmount: cart.discountAmount.toInt(),
+          totalAmount: cart.totalAmount.toInt(),
+          paidAmount: cart.totalAmount.toInt(),
+          changeAmount: 0,
+          status: 'paid',
+          paymentStatus: 'paid',
+          paymentMethod: 'cash',
+          orderDate: DateTime.now(),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          isDeleted: false,
+          syncStatus: 'pending',
+          items: await Future.wait(cart.items.map((item) async {
+            final product = await productDao.getProductById(item.productId);
+            return order_entity.OrderItem(
+              id: 0,
+              uuid: 'temp-item-uuid',
+              orderId: 0,
+              productId: item.productId,
+              productName: product?.name ?? 'Product ${item.productId}',
+              quantity: item.quantity,
+              unitPrice: item.unitPrice.toInt(),
+              totalPrice: item.totalPrice.toInt(),
+              discountAmount: 0,
+              notes: item.notes,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+              isDeleted: false,
+              syncStatus: 'pending',
+            );
+          }).toList()),
+        );
+  
+        // Ensure business settings are loaded
+        final businessSettingsState = ref.read(businessSettingsProvider);
+        print('DEBUG RECEIPT (PRINT): businessSettingsState.settings.isEmpty: ${businessSettingsState.settings.isEmpty}');
+        print('DEBUG RECEIPT (PRINT): businessSettingsState.isLoading: ${businessSettingsState.isLoading}');
+        print('DEBUG RECEIPT (PRINT): businessSettingsState.settings.length: ${businessSettingsState.settings.length}');
+        if (businessSettingsState.settings.isEmpty && !businessSettingsState.isLoading) {
+          print('DEBUG RECEIPT (PRINT): Loading business settings...');
+          await ref.read(businessSettingsProvider.notifier).loadBusinessSettings();
+          print('DEBUG RECEIPT (PRINT): Business settings loaded');
+        }
+        final businessSettings = ref.read(businessSettingsProvider).settings.firstOrNull;
+        print('DEBUG RECEIPT (PRINT): businessSettings is null: ${businessSettings == null}');
+        if (businessSettings != null) {
+          print('DEBUG RECEIPT (PRINT): businessSettings.storeName: ${businessSettings.storeName}');
+          print('DEBUG RECEIPT (PRINT): businessSettings.address: ${businessSettings.address}');
+          print('DEBUG RECEIPT (PRINT): businessSettings.phoneNumber: ${businessSettings.phoneNumber}');
+        }
+
+        // Ensure printer settings are loaded
+        final printerSettingsState = ref.read(printerSettingsProvider);
+        if (printerSettingsState.settings.isEmpty && !printerSettingsState.isLoading) {
+          await ref.read(printerSettingsProvider.notifier).loadPrinterSettings();
+        }
+        final printerSettings = ref.read(printerSettingsProvider).settings.firstOrNull;
+        final receiptContent = await receiptService.generateReceipt(
+          order: order,
+          businessSettings: businessSettings,
+          printerSettings: printerSettings,
+        );
+  
+        // Show toast notification (placeholder for actual print functionality)
+        if (context.mounted) {
+          CustomToast.show(
+            context,
+            message: 'Printing receipt...',
+            backgroundColor: const Color(0xFF5E8C52),
+            textColor: Colors.white,
+            icon: Icons.check_circle_outline,
+          );
+          
+          // Show a dialog indicating print was initiated
+          showDialog(
+            context: context,
+            builder: (context) => Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF5E8C52).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: const Icon(
+                        Icons.print_rounded,
+                        color: Color(0xFF5E8C52),
+                        size: 48,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Printing Receipt',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1A1A2A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Receipt is being sent to the printer',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF666666),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5E8C52),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          CustomToast.show(
+            context,
+            message: 'Failed to print receipt: ${e.toString()}',
+            backgroundColor: const Color(0xFFFF6B6B),
+            textColor: Colors.white,
+            icon: Icons.error_outline,
+          );
+        }
+      }
+    }
   }
-}

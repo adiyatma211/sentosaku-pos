@@ -2,6 +2,8 @@ import 'package:injectable/injectable.dart';
 
 import '../../domain/services/receipt_service.dart';
 import '../../domain/entities/order.dart' as order_entity;
+import '../../domain/entities/business_settings.dart';
+import '../../domain/entities/printer_settings.dart';
 
 @LazySingleton(as: ReceiptService)
 class ReceiptServiceImpl implements ReceiptService {
@@ -9,27 +11,64 @@ class ReceiptServiceImpl implements ReceiptService {
   Future<String> generateReceipt({
     required order_entity.Order order,
     Map<String, dynamic>? options,
+    BusinessSettings? businessSettings,
+    PrinterSettings? printerSettings,
   }) async {
+    // Debug logging
+    print('DEBUG RECEIPT SERVICE: generateReceipt called');
+    print('DEBUG RECEIPT SERVICE: businessSettings is null: ${businessSettings == null}');
+    if (businessSettings != null) {
+      print('DEBUG RECEIPT SERVICE: businessSettings.storeName: ${businessSettings.storeName}');
+      print('DEBUG RECEIPT SERVICE: businessSettings.address: ${businessSettings.address}');
+      print('DEBUG RECEIPT SERVICE: businessSettings.phoneNumber: ${businessSettings.phoneNumber}');
+    }
+    
     // Generate receipt content
-    final receiptContent = _buildReceiptContent(order, options);
+    final receiptContent = _buildReceiptContent(order, options, businessSettings, printerSettings);
     
     return receiptContent;
   }
 
-  String _buildReceiptContent(order_entity.Order order, Map<String, dynamic>? options) {
+  String _buildReceiptContent(
+    order_entity.Order order,
+    Map<String, dynamic>? options,
+    BusinessSettings? businessSettings,
+    PrinterSettings? printerSettings,
+  ) {
     final buffer = StringBuffer();
+    final showHeader = printerSettings?.showHeader ?? true;
+    final showFooter = printerSettings?.showFooter ?? true;
+    final showBarcode = printerSettings?.showBarcode ?? true;
     
     // Header
-    buffer.writeln('================================');
-    buffer.writeln('           SENTOSA POS');
-    buffer.writeln('================================');
-    buffer.writeln('');
-    
-    // Business info
-    buffer.writeln('Business: Sentosa Cafe');
-    buffer.writeln('Address: 123 Main Street, Jakarta');
-    buffer.writeln('Phone: +62 812 3456');
-    buffer.writeln('');
+    if (showHeader) {
+      buffer.writeln('================================');
+      if (businessSettings != null) {
+        buffer.writeln('           ${businessSettings.storeName.toUpperCase()}');
+      } else {
+        buffer.writeln('           SENTOSA POS');
+      }
+      buffer.writeln('================================');
+      buffer.writeln('');
+      
+      // Business info
+      if (businessSettings != null) {
+        buffer.writeln(businessSettings.storeName);
+        buffer.writeln(businessSettings.address);
+        buffer.writeln('Phone: ${businessSettings.phoneNumber}');
+        if (businessSettings.email != null) {
+          buffer.writeln('Email: ${businessSettings.email}');
+        }
+        if (businessSettings.taxNumber != null) {
+          buffer.writeln('NPWP: ${businessSettings.taxNumber}');
+        }
+      } else {
+        buffer.writeln('Business: Sentosa Cafe');
+        buffer.writeln('Address: 123 Main Street, Jakarta');
+        buffer.writeln('Phone: +62 812 3456');
+      }
+      buffer.writeln('');
+    }
     
     // Order info
     buffer.writeln('ORDER #: ${order.orderNumber}');
@@ -98,10 +137,19 @@ class ReceiptServiceImpl implements ReceiptService {
     buffer.writeln('');
     
     // Footer
-    buffer.writeln('================================');
-    buffer.writeln('Thank you for your purchase!');
-    buffer.writeln('Please come again soon.');
-    buffer.writeln('');
+    if (showFooter) {
+      buffer.writeln('================================');
+      buffer.writeln('Thank you for your purchase!');
+      buffer.writeln('Please come again soon.');
+      if (businessSettings != null && businessSettings.phoneNumber.isNotEmpty) {
+        buffer.writeln('Contact: ${businessSettings.phoneNumber}');
+      }
+      if (showBarcode) {
+        buffer.writeln('');
+        buffer.writeln('Order: ${order.orderNumber}');
+      }
+      buffer.writeln('');
+    }
     
     return buffer.toString();
   }

@@ -114,7 +114,13 @@ class OrderRepository implements OrderRepositoryInterface {
   
   @override
   Future<entity.Order> updateOrder(entity.Order order) async {
+    print('DEBUG UPDATE ORDER: Starting updateOrder for UUID: ${order.uuid}');
+    print('DEBUG UPDATE ORDER: Order ID: ${order.id}, Order Number: ${order.orderNumber}');
+    print('DEBUG UPDATE ORDER: Paid Amount: ${order.paidAmount}, Change Amount: ${order.changeAmount}');
+    print('DEBUG UPDATE ORDER: order.id is null: ${order.id == null}');
+    
     final orderCompanion = OrdersCompanion(
+      id: Value(order.id), // ADDING THE MISSING ID FIELD
       uuid: Value(order.uuid),
       orderNumber: Value(order.orderNumber),
       customerName: Value(order.customerName),
@@ -135,13 +141,20 @@ class OrderRepository implements OrderRepositoryInterface {
       updatedAt: Value(DateTime.now()),
     );
     
+    print('DEBUG UPDATE ORDER: Created orderCompanion with id: ${orderCompanion.id.value}');
+    print('DEBUG UPDATE ORDER: Updating database...');
     await _database.update(_database.orders).replace(orderCompanion);
+    print('DEBUG UPDATE ORDER: Database update completed, retrieving updated order...');
+    
     final updatedOrder = await getOrderByUuid(order.uuid);
+    print('DEBUG UPDATE ORDER: Retrieved updated order: ${updatedOrder != null}');
     
     if (updatedOrder == null) {
+      print('DEBUG UPDATE ORDER: ERROR - Failed to retrieve updated order');
       throw Exception('Failed to update order');
     }
     
+    print('DEBUG UPDATE ORDER: Successfully updated order - ID: ${updatedOrder.id}, UUID: ${updatedOrder.uuid}');
     return updatedOrder;
   }
   

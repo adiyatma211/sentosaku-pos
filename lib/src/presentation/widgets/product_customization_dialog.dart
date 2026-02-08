@@ -684,7 +684,7 @@ class _ProductCustomizationDialogState
                         child: GestureDetector(
                           onTap: () => _updateProductOption(option.id, value.id),
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
+                            duration: Duration.zero,
                             curve: Curves.easeInOut,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
@@ -956,7 +956,7 @@ class _ProductCustomizationDialogState
                         child: GestureDetector(
                           onTap: () => _updateIngredientOption(ingredient.id, entry.key),
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
+                            duration: Duration.zero,
                             curve: Curves.easeInOut,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
